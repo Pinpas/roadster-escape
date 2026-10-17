@@ -73,8 +73,10 @@ const copyParam = params.get('copy');
 
 async function run(sizeName: SizeName, fps: 30 | 60, pathChoice: EncodePath | 'auto', audio: boolean, copyFrame: boolean) {
   const job: EncodeJob = { size: SIZES[sizeName], fps, seconds: 5, audio, videoBitrate, copyFrame };
-  const path = pathChoice === 'auto' ? await choosePath(job.size, fps) : pathChoice;
-  if (!path) throw new Error('No encoder path on this browser');
+  const chosen = pathChoice === 'auto' ? await choosePath(job.size, fps) : { path: pathChoice };
+  if (!chosen) throw new Error('No encoder path on this browser');
+  const { path } = chosen;
+  job.avcCodec = chosen.avcCodec;
   log.textContent = `Encoding ${sizeName} ${fps} fps via ${path}...`;
   const r = await encode(path, job, renderer);
   const ext = r.mime.startsWith('video/mp4') ? 'mp4' : 'webm';

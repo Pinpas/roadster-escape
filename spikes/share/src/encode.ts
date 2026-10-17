@@ -19,6 +19,7 @@ export type EncodeJob = {
   seconds: number;
   audio: boolean;
   videoBitrate: number;
+  avcCodec?: string;
   // Safari 16.4 to about 17.1 read the composited WebGL frame instead of the drawing
   // buffer, so offline frames repeat. A 2D copy hands the encoder the real pixels.
   copyFrame: boolean;
@@ -50,7 +51,7 @@ const RECORDER_MIMES = [
 
 // mediabunny asks only for High profile. Android requires only Baseline from hardware
 // encoders, so walk down the profiles before giving up on video.
-const AVC_PROFILES = { high: '64', main: '4d', baseline: '42' } as const;
+const AVC_PROFILES = { high: '6400', main: '4d00', constrainedBaseline: '42e0' } as const;
 
 // A stalled encoder never resolves add() or finalize(); give up instead of leaving
 // the Share button off forever.
@@ -60,21 +61,31 @@ export async function pickAvcCodec(size: FrameSize, fps: number): Promise<string
   if (typeof VideoEncoder === 'undefined') return null;
   const level = fps > 30 ? '20' : '1f';
   for (const profile of Object.values(AVC_PROFILES)) {
-    const fullCodecString = `avc1.${profile}00${level}`;
+    const fullCodecString = `avc1.${profile}${level}`;
     if (await canEncodeVideo('avc', { ...size, frameRate: fps, fullCodecString })) return fullCodecString;
   }
   return null;
 }
 
-function withStallTimeout<T>(p: Promise<T>, output: Output, what: string): Promise<T> {
+// Fails when the encoder emits no packet for STALL_MS. mediabunny ignores cancel() once
+// finalize() has started, so a stall in the flush only abandons the output here; the
+// game runs the encode in a Worker it can terminate.
+function packetWatchdog() {
+  let lastPacket = performance.now();
   let timer = 0;
-  const stall = new Promise<never>((_, reject) => {
-    timer = window.setTimeout(() => {
-      void output.cancel();
-      reject(new Error(`EncoderStalled: ${what} took over ${STALL_MS} ms`));
-    }, STALL_MS);
+  const stalled = new Promise<never>((_, reject) => {
+    timer = window.setInterval(() => {
+      if (performance.now() - lastPacket < STALL_MS) return;
+      clearInterval(timer);
+      reject(new Error(`EncoderStalled: no packet for ${STALL_MS} ms`));
+    }, 250);
   });
-  return Promise.race([p, stall]).finally(() => clearTimeout(timer));
+  stalled.catch(() => {});
+  return {
+    packet: () => (lastPacket = performance.now()),
+    guard: <T>(p: Promise<T>) => Promise.race([p, stalled]),
+    stop: () => clearInterval(timer),
+  };
 }
 
 export function recorderMime(): string | null {
@@ -82,9 +93,10 @@ export function recorderMime(): string | null {
   return RECORDER_MIMES.find((m) => MediaRecorder.isTypeSupported(m)) ?? null;
 }
 
-export async function choosePath(size: FrameSize, fps: number): Promise<EncodePath | null> {
-  if (await pickAvcCodec(size, fps)) return 'webcodecs';
-  return recorderMime() ? 'mediarecorder' : null;
+export async function choosePath(size: FrameSize, fps: number): Promise<{ path: EncodePath; avcCodec?: string } | null> {
+  const avcCodec = await pickAvcCodec(size, fps);
+  if (avcCodec) return { path: 'webcodecs', avcCodec };
+  return recorderMime() ? { path: 'mediarecorder' } : null;
 }
 
 export async function encode(path: EncodePath, job: EncodeJob, renderer: ReplayRenderer): Promise<Encoded> {
@@ -93,7 +105,7 @@ export async function encode(path: EncodePath, job: EncodeJob, renderer: ReplayR
 
 async function encodeWebCodecs(job: EncodeJob, renderer: ReplayRenderer): Promise<Encoded> {
   const start = performance.now();
-  const fullCodecString = await pickAvcCodec(job.size, job.fps);
+  const fullCodecString = job.avcCodec ?? (await pickAvcCodec(job.size, job.fps));
   if (!fullCodecString) throw new Error('No H.264 profile encodes this size');
   renderer.setSize(job.size);
   const target = new BufferTarget();
@@ -102,6 +114,7 @@ async function encodeWebCodecs(job: EncodeJob, renderer: ReplayRenderer): Promis
   let videoCodec = 'avc';
   let encoderConfig: VideoEncoderConfig | null = null;
   let packets = 0;
+  const watchdog = packetWatchdog();
   const copy = job.copyFrame ? Object.assign(document.createElement('canvas'), job.size) : null;
   const copyCtx = copy?.getContext('2d') ?? null;
   const video = new CanvasSource(copy ?? renderer.canvas, {
@@ -110,7 +123,10 @@ async function encodeWebCodecs(job: EncodeJob, renderer: ReplayRenderer): Promis
     keyFrameInterval: 1,
     latencyMode: 'quality',
     fullCodecString,
-    onEncodedPacket: () => packets++,
+    onEncodedPacket: () => {
+      packets++;
+      watchdog.packet();
+    },
     onEncoderConfig: (c) => {
       videoCodec = c.codec;
       encoderConfig = c;
@@ -129,19 +145,26 @@ async function encodeWebCodecs(job: EncodeJob, renderer: ReplayRenderer): Promis
     output.addAudioTrack(audio);
   }
 
-  await output.start();
   const frames = Math.round(job.seconds * job.fps);
   let renderMs = 0;
-  for (let i = 0; i < frames; i++) {
-    const t = i / job.fps;
-    const r0 = performance.now();
-    renderer.renderAt(t);
-    copyCtx?.drawImage(renderer.canvas, 0, 0);
-    renderMs += performance.now() - r0;
-    await withStallTimeout(video.add(t, 1 / job.fps), output, `frame ${i}`);
+  try {
+    await output.start();
+    for (let i = 0; i < frames; i++) {
+      const t = i / job.fps;
+      const r0 = performance.now();
+      renderer.renderAt(t);
+      copyCtx?.drawImage(renderer.canvas, 0, 0);
+      renderMs += performance.now() - r0;
+      await watchdog.guard(video.add(t, 1 / job.fps));
+    }
+    if (audio) await audio.add(await renderReplayAudio(job.seconds));
+    await watchdog.guard(output.finalize());
+  } catch (e) {
+    void output.cancel();
+    throw e;
+  } finally {
+    watchdog.stop();
   }
-  if (audio) await audio.add(await renderReplayAudio(job.seconds));
-  await withStallTimeout(output.finalize(), output, 'finalize');
   if (packets !== frames) throw new Error(`EncoderDroppedFrames: ${packets} of ${frames} frames encoded`);
 
   const blob = new Blob([target.buffer!], { type: 'video/mp4' });
