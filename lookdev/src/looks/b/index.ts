@@ -1,22 +1,50 @@
-import { Color, Fog, HemisphereLight, MeshBasicMaterial, MeshLambertMaterial } from 'three';
+import { Color, FogExp2, HemisphereLight } from 'three';
 import { assignMaterials, type Look } from '../../common/look';
-import { palette } from '../../common/palette';
+import { createPost } from './post';
+import { materialPicker } from './shading';
+import { clouds, skyDome } from './sky';
+import { tune } from './tune';
 
-/** Placeholder until look B lands: plain Lambert, so the shared scene can be checked. */
+/**
+ * Look B, "graded lit": stock three lighting (toon ramp, hemisphere fill, one shadowed sun)
+ * with small onBeforeCompile patches, a 3D cloud sky, and one combined post pass.
+ */
 export const lookB: Look = {
   id: 'b',
-  title: 'stub',
-  canvasAntialias: true,
+  title: 'graded lit',
+  canvasAntialias: false,
   build(renderer, world) {
-    const lit = new MeshLambertMaterial({ vertexColors: true });
-    const flat = new MeshBasicMaterial({ vertexColors: true });
-    assignMaterials(world, (p) => (p.role === 'emissive' ? flat : lit));
-    world.scene.add(new HemisphereLight(new Color(palette.skyTop), new Color(palette.sand), 1.2));
-    world.scene.background = new Color(palette.skyHorizon);
-    world.scene.fog = new Fog(new Color(palette.skyHorizon), 200, 3000);
+    assignMaterials(world, materialPicker());
+    world.sun.color.set(tune.sun);
+    world.sun.intensity = tune.sunIntensity;
+    world.scene.add(new HemisphereLight(new Color(tune.hemiSky), new Color(tune.hemiGround), tune.hemiIntensity));
+    world.scene.fog = new FogExp2(new Color(tune.haze), tune.fogDensity);
+    world.scene.background = null;
+
+    const dome = skyDome();
+    const sky = clouds();
+    world.scene.add(dome, sky);
+
+    const post = createPost(renderer);
+    const still = new URLSearchParams(location.search).has('still');
+    let frames = 0;
+
     return {
-      render: () => renderer.render(world.scene, world.camera),
-      resize: () => {},
+      update(t) {
+        const cam = world.camera.position;
+        dome.position.copy(cam);
+        sky.position.set(cam.x, 0, cam.z);
+        sky.rotation.y = t * 0.0015;
+      },
+      render() {
+        if (still && frames > 2) return;
+        frames++;
+        post.render(world.scene, world.camera);
+      },
+      resize(w, h, dpr) {
+        frames = 0;
+        post.resize(w, h, dpr);
+      },
     };
   },
 };
