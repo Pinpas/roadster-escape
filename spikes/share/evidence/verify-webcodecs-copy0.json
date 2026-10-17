@@ -1,0 +1,212 @@
+{
+  "label": "webcodecs-copy0",
+  "startedAt": 1792241184886,
+  "fps": "30",
+  "path": "webcodecs",
+  "bitrate": "6000000",
+  "copy": "0",
+  "args": [
+    "--enable-gpu",
+    "--ignore-gpu-blocklist",
+    "--use-angle=vulkan",
+    "--enable-features=Vulkan"
+  ],
+  "readbackMs": {
+    "portrait": 84,
+    "landscape": 86
+  },
+  "share": {
+    "download": "roadster-escape-replay.mp4",
+    "bytes": 1577731,
+    "popup": "https://x.com/intent/tweet?text=I+escaped+3+cops+in+Roadster+Escape.+Daily+chase+2026-10-17%2C+score+12+480.&url=http%3A%2F%2F127.0.0.1%3A5104%2F"
+  },
+  "caps": {
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.8078.4 Safari/537.36",
+    "isSecureContext": true,
+    "inAppBrowser": null,
+    "coarsePointer": false,
+    "hardwareConcurrency": 8,
+    "webgl": "ANGLE (Intel, Vulkan 1.4.318 (Intel(R) Iris(R) Plus Graphics 645 (CFL GT3) (0x00003EA6)), Intel open-source Mesa driver)",
+    "VideoEncoder": true,
+    "AudioEncoder": true,
+    "mediabunnyAvcPortrait": true,
+    "mediabunnyAvcLandscape": true,
+    "encodableVideoCodecs": [
+      "avc",
+      "vp9",
+      "av1",
+      "vp8"
+    ],
+    "aac": false,
+    "opus": true,
+    "avc": {
+      "avc1.42E01F 720x1280 prefer-hardware": "no",
+      "avc1.42E01F 1280x720 prefer-hardware": "no",
+      "avc1.42E01F 720x1280 prefer-software": "yes",
+      "avc1.42E01F 1280x720 prefer-software": "yes",
+      "avc1.4D0028 720x1280 prefer-hardware": "no",
+      "avc1.4D0028 1280x720 prefer-hardware": "no",
+      "avc1.4D0028 720x1280 prefer-software": "yes",
+      "avc1.4D0028 1280x720 prefer-software": "yes",
+      "avc1.640028 720x1280 prefer-hardware": "no",
+      "avc1.640028 1280x720 prefer-hardware": "no",
+      "avc1.640028 720x1280 prefer-software": "yes",
+      "avc1.640028 1280x720 prefer-software": "yes",
+      "avc1.42001F 720x1280 prefer-hardware": "no",
+      "avc1.42001F 1280x720 prefer-hardware": "no",
+      "avc1.42001F 720x1280 prefer-software": "yes",
+      "avc1.42001F 1280x720 prefer-software": "yes"
+    },
+    "mediaRecorder": {
+      "video/mp4;codecs=avc1.42E01F,mp4a.40.2": false,
+      "video/mp4;codecs=avc1": true,
+      "video/mp4": true,
+      "video/webm;codecs=vp9,opus": true,
+      "video/webm": true
+    },
+    "share": false,
+    "canShareMp4File": "no canShare"
+  },
+  "results": [
+    {
+      "size": "portrait",
+      "copyFrame": false,
+      "path": "webcodecs",
+      "videoBitrate": 6000000,
+      "mime": "video/mp4",
+      "videoCodec": "avc1.64001f",
+      "audioCodec": null,
+      "encoderConfig": {
+        "codec": "avc1.64001f",
+        "width": 720,
+        "height": 1280,
+        "displayWidth": 720,
+        "displayHeight": 1280,
+        "bitrate": 6000000,
+        "bitrateMode": "variable",
+        "alpha": "discard",
+        "framerate": 30,
+        "latencyMode": "quality",
+        "avc": {
+          "format": "avc"
+        }
+      },
+      "frames": 150,
+      "wallMs": 1117,
+      "renderMs": 80,
+      "bytes": 1428537,
+      "xSafe": true,
+      "shareRoute": "download-and-intent",
+      "selfCheck": {
+        "ok": true,
+        "codec": "avc1.640c1f",
+        "packets": 150,
+        "expectedFrames": 150,
+        "duration": 5,
+        "distinctProbeFrames": "5/5"
+      }
+    },
+    {
+      "size": "landscape",
+      "copyFrame": false,
+      "path": "webcodecs",
+      "videoBitrate": 6000000,
+      "mime": "video/mp4",
+      "videoCodec": "avc1.64001f",
+      "audioCodec": null,
+      "encoderConfig": {
+        "codec": "avc1.64001f",
+        "width": 1280,
+        "height": 720,
+        "displayWidth": 1280,
+        "displayHeight": 720,
+        "bitrate": 6000000,
+        "bitrateMode": "variable",
+        "alpha": "discard",
+        "framerate": 30,
+        "latencyMode": "quality",
+        "avc": {
+          "format": "avc"
+        }
+      },
+      "frames": 150,
+      "wallMs": 1127,
+      "renderMs": 64,
+      "bytes": 1577731,
+      "xSafe": true,
+      "shareRoute": "download-and-intent",
+      "selfCheck": {
+        "ok": true,
+        "codec": "avc1.640c1f",
+        "packets": 150,
+        "expectedFrames": 150,
+        "duration": 5,
+        "distinctProbeFrames": "5/5"
+      }
+    }
+  ],
+  "files": [
+    {
+      "file": "Linux-2026-10-17T12-46-26-874Z-portrait-30-webcodecs-6M.mp4",
+      "bytes": 1428537,
+      "format": "mov,mp4,m4a,3gp,3g2,mj2",
+      "duration": 5,
+      "bit_rate": 2285659,
+      "streams": [
+        {
+          "type": "video",
+          "codec": "h264",
+          "profile": "High",
+          "size": "720x1280",
+          "pix_fmt": "yuv420p",
+          "fps": "30/1",
+          "frames": "150"
+        }
+      ],
+      "decodeExit": 0,
+      "decodeErrors": "none",
+      "psnrVsCanvasAt2_5s": 43.188892
+    },
+    {
+      "file": "Linux-2026-10-17T12-46-28-148Z-landscape-30-webcodecs-6M.mp4",
+      "bytes": 1577731,
+      "format": "mov,mp4,m4a,3gp,3g2,mj2",
+      "duration": 5,
+      "bit_rate": 2524369,
+      "streams": [
+        {
+          "type": "video",
+          "codec": "h264",
+          "profile": "High",
+          "size": "1280x720",
+          "pix_fmt": "yuv420p",
+          "fps": "30/1",
+          "frames": "150"
+        }
+      ],
+      "decodeExit": 0,
+      "decodeErrors": "none",
+      "psnrVsCanvasAt2_5s": 42.760088
+    },
+    {
+      "file": "share-download-roadster-escape-replay.mp4",
+      "bytes": 1577731,
+      "format": "mov,mp4,m4a,3gp,3g2,mj2",
+      "duration": 5,
+      "bit_rate": 2524369,
+      "streams": [
+        {
+          "type": "video",
+          "codec": "h264",
+          "profile": "High",
+          "size": "1280x720",
+          "pix_fmt": "yuv420p",
+          "fps": "30/1",
+          "frames": "150"
+        }
+      ],
+      "decodeExit": 0,
+      "decodeErrors": "none"
+    }
+  ]
+}

@@ -9,7 +9,7 @@ const args = ['--enable-gpu', '--ignore-gpu-blocklist', '--use-angle=vulkan', '-
 const configs = [
   { fps: 30, bitrate: 6e6, copy: 1 },
   { fps: 30, bitrate: 6e6, copy: 0 },
-  { fps: 60, bitrate: 8e6, copy: 1 },
+  { fps: 60, bitrate: 6e6, copy: 1 },
 ];
 
 const runs = [];

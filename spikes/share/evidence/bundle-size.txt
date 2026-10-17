@@ -1,0 +1,6 @@
+mediabunny-mux-only.ts min 115.3 KiB  gzip 30.8 KiB
+mediabunny-video-audio.ts min 224.8 KiB  gzip 57.5 KiB
+mediabunny-video-readback.ts min 313.0 KiB  gzip 82.8 KiB
+mediabunny-video.ts  min 191.7 KiB  gzip 50.8 KiB
+mp4-muxer.ts         min 30.4 KiB  gzip 8.9 KiB
+three.ts             min 724.9 KiB  gzip 185.6 KiB
