@@ -11,8 +11,12 @@ import { createWorld, speedAt, stepWorld, type SimEvent, type World } from './wo
 const SEED = 20261015;
 const STARS: readonly Stars[] = [1, 2, 3, 4, 5];
 
+/** A world with cops but no traffic, for tests about the chase alone. */
+const withoutTraffic = (world: World): World => ({ ...world, trafficIn: Number.MAX_SAFE_INTEGER });
+
 /** A world where only the cops a test places ever show up. */
-const quietWorld = (): World => ({ ...createWorld(SEED), spawnIn: Number.MAX_SAFE_INTEGER });
+const quietWorld = (): World =>
+  withoutTraffic({ ...createWorld(SEED), spawnIn: Number.MAX_SAFE_INTEGER });
 
 const copAt = (id: number, lane: Lane, state: CopState, gap = 0): Cop => ({
   id,
@@ -78,7 +82,7 @@ const kinds = (events: readonly SimEvent[]): SimEvent['kind'][] =>
   events.map((event) => event.kind);
 
 const chase = (): World => {
-  const world = createWorld(SEED);
+  const world = withoutTraffic(createWorld(SEED));
   world.heat = WANTED_LEVELS[3].fromHeat;
   return world;
 };
@@ -108,7 +112,7 @@ describe('world determinism', () => {
 
   it('lets the seed decide where cops spawn', () => {
     const firstSpawnLanes = Array.from({ length: 12 }, (_, seed) => {
-      const world = createWorld(seed);
+      const world = withoutTraffic(createWorld(seed));
       stepUntil(world, (current) => current.cops.length > 0);
       return world.cops[0]?.lane;
     });
@@ -127,7 +131,7 @@ describe('a dodging bot', () => {
 });
 
 describe('PIT and barrel roll', () => {
-  const atFirstWarning = createWorld(SEED);
+  const atFirstWarning = withoutTraffic(createWorld(SEED));
   stepUntil(atFirstWarning, (world) => world.cops.some((cop) => cop.state.kind === 'warn'));
   const landing = stepUntil(
     structuredClone(atFirstWarning),
@@ -220,7 +224,7 @@ describe('PIT and barrel roll', () => {
   });
 
   it('wrecks both cops of a pair that lunge into a rolling Roadster from both sides', () => {
-    const world = createWorld(SEED);
+    const world = withoutTraffic(createWorld(SEED));
     world.cops = [lunging(0, 0), lunging(1, 2)];
     const heat = world.heat;
     const events = stepWorld(world, [{ kind: 'roll', side: 'left' }]);
@@ -238,7 +242,7 @@ describe('PIT and barrel roll', () => {
   });
 
   it('busts a Roadster that sits still between a lunging pair, then stops changing', () => {
-    const world = createWorld(SEED);
+    const world = withoutTraffic(createWorld(SEED));
     world.cops = [lunging(0, 0), lunging(1, 2)];
     expect(stepWorld(world, [])).toEqual([{ kind: 'busted', copId: 0 }]);
 
@@ -336,7 +340,7 @@ describe('cops keep their side of the Roadster', () => {
 });
 
 describe('input buffer', () => {
-  const hopped = createWorld(SEED);
+  const hopped = withoutTraffic(createWorld(SEED));
   stepWorld(hopped, [{ kind: 'hop' }]);
   const landing = stepUntil(
     structuredClone(hopped),
@@ -399,7 +403,7 @@ describe('speed and wanted level', () => {
   });
 
   const warningSteps = (stars: Stars): number => {
-    const world = createWorld(SEED);
+    const world = withoutTraffic(createWorld(SEED));
     world.heat = WANTED_LEVELS[stars].fromHeat;
     stepUntil(world, (current) => current.cops.some((cop) => cop.state.kind === 'warn'));
     return stepUntil(world, (current) => current.cops.some((cop) => cop.state.kind === 'lunge'));
@@ -407,7 +411,7 @@ describe('speed and wanted level', () => {
 
   it('sends a pair that boxes the Roadster in from both sides', () => {
     const firstSpawnAtTwoStars = (seed: number): World => {
-      const world = createWorld(seed);
+      const world = withoutTraffic(createWorld(seed));
       world.heat = WANTED_LEVELS[2].fromHeat;
       stepUntil(world, (current) => current.cops.length > 0);
       return world;
@@ -444,7 +448,7 @@ describe('speed and wanted level', () => {
 
   it('spawns at least as many cops per minute at each star as at the star below', () => {
     const copsPerMinute = (stars: Stars): number => {
-      const world = createWorld(SEED);
+      const world = withoutTraffic(createWorld(SEED));
       let spawned = 0;
       for (let step = 0; step < 60 * 60; step++) {
         world.heat = WANTED_LEVELS[stars].fromHeat;
@@ -463,7 +467,7 @@ describe('speed and wanted level', () => {
     const parked = (id: number): Cop =>
       copAt(id, 0, { kind: 'recover', stepsLeft: 1_000_000 }, TUNING.copSpawnGap);
     for (let seed = 0; seed < 20; seed++) {
-      const world = createWorld(seed);
+      const world = withoutTraffic(createWorld(seed));
       world.heat = WANTED_LEVELS[2].fromHeat;
       world.spawnIn = 0;
       world.cops = [parked(100), parked(101)];
