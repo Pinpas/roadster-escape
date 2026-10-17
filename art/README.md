@@ -61,12 +61,14 @@ Quantization rescales and offsets each node that owns a mesh. So every node whos
 ```text
 roadster                   root: move it to drive and hop
 ├── chassis                pivot on the ground under the car centre: rotate about Z to lean, scale Y to squash
-│   ├── body               material body
-│   ├── glass              material glass: windshield and cabin
-│   ├── lights             material lights: head lights and tail lights
-│   ├── thruster_rear_1-4  socket, left to right across the tail
-│   ├── thruster_left_1-3  socket, front to back under the left sill
-│   └── thruster_right_1-3 socket, front to back under the right sill
+│   ├── body               material body: silver upper, satin black lower band, wing on struts, diffuser
+│   ├── glass              material glass: the set-back glasshouse
+│   ├── lights             material lights: head lights and the full-width tail bar
+│   ├── plate              material body: the ESC4PE plate
+│   ├── thruster_rear_1-4  socket, left to right across the diffuser
+│   ├── thruster_corner_left, thruster_corner_right  socket, under the rear corners, firing down
+│   ├── thruster_left_1-2  socket, front to back under the left sill
+│   └── thruster_right_1-2 socket, front to back under the right sill
 ├── wheel_fl               socket, front left
 ├── wheel_fr               socket, front right
 ├── wheel_rl               socket, rear left
@@ -75,11 +77,14 @@ roadster                   root: move it to drive and hop
 
 The six materials are `body`, `glass`, `lights`, `wheel`, `nozzle` and `thruster_mouth`.
 
-- **Thrusters.** The socket origin is at the nozzle mouth. Its local -Z points the way the gas leaves. Rear thrusters fire backwards (+Z). Side thrusters fire down and 25 degrees outwards. The nozzle mesh has two materials: `nozzle` for the shell and `thruster_mouth` for the mouth disc. The mouth disc has no baked occlusion, so a look can make it glow. All ten thrusters share one mesh and one `thruster_mouth` material, so glow per thruster needs a cloned material or a per-instance uniform.
-- **Wheels.** The socket origin is on the axle. The wheel spins about local X with a radius of 0.36 m. Driving forward, `rotation.x` decreases by distance / 0.36. The four wheels share one mesh.
-- **Lights.** Head lights use lane paint `#fff4d6` and tail lights use police red `#ff3048`. They have no baked occlusion. The file sets no emissive colour, so a look drives the glow from the `lights` material.
-- **Body.** The body is roadster red `#e8322e`. Dark trim is painted on the underside, the wheel wells, the tail panel around the rear thrusters, the chin and the sills.
+- **Thrusters.** The socket origin is at the nozzle mouth. Its local -Z points the way the gas leaves. Rear thrusters fire backwards (+Z). Corner thrusters fire straight down. Side thrusters fire down and 25 degrees outwards. The nozzle mesh has two materials: `nozzle` for the shell and `thruster_mouth` for the mouth disc. The mouth disc has no baked occlusion, so a look can make it glow. All ten thrusters share one mesh and one `thruster_mouth` material, so glow per thruster needs a cloned material or a per-instance uniform.
+- **Wheels.** The socket origin is on the axle. The wheel spins about local X with a radius of 0.36 m. Driving forward, `rotation.x` decreases by distance / 0.36. The four wheels share one mesh, with dark six-point star hubs of our own design.
+- **Lights.** Head lights use lane paint `#fff4d6` and the full-width tail bar uses police red `#ff3048`. They have no baked occlusion. The file sets no emissive colour, so a look drives the glow from the `lights` material.
+- **Body.** A stylised fan take on the car shown on 15 October 2026, not a copy of it. The upper body is silver-grey `#d9d6d0` with flat, crisply creased panels, over a satin black `#1f1d24` lower band and sills. A wing on two struts and a dark diffuser carry the rear. The plate reads `ESC4PE`. No badges or wordmarks. The first red version is kept for comparison in `previews/roadster-v1-red.png`, and its red stays in the palette as a later player colour.
 
 ![The Roadster contact sheet](previews/roadster.png)
 
+![The Roadster from the rear three-quarter view](previews/roadster-rear.png)
+
 The contact sheet shows, from top left: a front three-quarter view, a rear three-quarter view with the four lit thruster mouths, the side profile, the plan view, and two renders at 20 by 20 pixels scaled up, from the front three-quarter angle and from the chase camera.
+
