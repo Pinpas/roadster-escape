@@ -36,7 +36,7 @@ export type CopEvent =
   | { readonly kind: 'crash' };
 
 type TickEvent = Extract<CopEvent, { readonly kind: 'tick' }>;
-type LandedCop = Cop & { readonly state: Extract<CopState, { readonly kind: 'landed' }> };
+export type LandedCop = Cop & { readonly state: Extract<CopState, { readonly kind: 'landed' }> };
 
 const CRUISE: CopState = { kind: 'cruise' };
 

@@ -38,7 +38,7 @@ An input that arrives a little early is buffered for about 150 ms, so a swipe ma
 
 ### Air tank
 
-The air tank holds 600 liters, like the real car. A hop costs air and a barrel roll costs more. A near miss refills some air. A near miss means passing a car or a cop within a small margin. The design rewards risk. You run dry when you play safe, and you fill up when you play close.
+The air tank holds 600 liters, like the real car. A hop costs air and a barrel roll costs more. A near miss refills some air. A near miss means passing a car or a cop within a small margin. Clearing a car with a hop or a roll counts, and a clean hop over a car refills more air than the hop costs. The design rewards risk. You run dry when you play safe, and you fill up when you play close.
 
 The tank is the only resource in the game. It replaces lives, shields, and power-ups.
 

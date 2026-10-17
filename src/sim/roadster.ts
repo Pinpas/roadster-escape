@@ -29,6 +29,7 @@ export type RoadsterEvent =
   | Action
   | { readonly kind: 'tick' }
   | { readonly kind: 'pit'; readonly lane: Lane }
+  | { readonly kind: 'crash'; readonly lane: Lane }
   | { readonly kind: 'refill'; readonly liters: number };
 
 const DRIVING: RoadsterState = { kind: 'driving' };
@@ -58,10 +59,18 @@ export function nextRoadster(roadster: Roadster, event: RoadsterEvent): Roadster
       return state.kind !== 'rolling' && occupiesLane(roadster, event.lane)
         ? { ...roadster, state: { kind: 'busted' } }
         : roadster;
+    case 'crash':
+      return !isAirborne(roadster) && state.kind !== 'rolling' && occupiesLane(roadster, event.lane)
+        ? { ...roadster, state: { kind: 'busted' } }
+        : roadster;
     case 'refill':
       return { ...roadster, air: Math.min(TUNING.tankLiters, roadster.air + event.liters) };
   }
 }
+
+/** Off the ground: mid-hop, or rolling out of a hop that has not landed yet. */
+export const isAirborne = ({ state }: Roadster): boolean =>
+  state.kind === 'hopping' || (state.kind === 'rolling' && state.airStepsLeft > 0);
 
 export function occupiesLane(roadster: Roadster, lane: Lane): boolean {
   const { state } = roadster;

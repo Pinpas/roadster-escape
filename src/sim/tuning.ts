@@ -1,4 +1,5 @@
 import { STEP_HZ, STEP_SECONDS } from './fixed-step';
+import type { SimEvent } from './world';
 
 export const steps = (ms: number): number => Math.round((ms * STEP_HZ) / 1000);
 
@@ -29,4 +30,23 @@ export const TUNING = {
   lungeSteps: steps(300),
   copRecoverSteps: steps(1000),
   wreckHeat: steps(10_000),
+
+  carLength: 4,
+  trafficSpeed: 10,
+  trafficSpawnAhead: 140,
+  trafficSpacing: 30,
+  trafficDespawnBehind: 30,
+  trafficMinEverySteps: steps(700),
+  trafficMaxEverySteps: steps(1800),
+  nearMissLiters: 60,
+
+  comboSteps: steps(5000),
+  maxCombo: 9,
 } as const;
+
+/** Style points per event, before the combo multiplier. */
+export const STYLE_POINTS = {
+  nearMiss: 50,
+  wrecked: 250,
+  perfectDodge: 500,
+} as const satisfies Partial<Record<SimEvent['kind'], number>>;
