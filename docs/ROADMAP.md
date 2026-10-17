@@ -13,6 +13,12 @@ These constraints shape every phase. Change one only with a written reason in th
 - **Assets.** Every model comes from a Blender script under `art/`. Generated `.glb` files are committed, so the game builds without Blender.
 - **Budget.** Under 3 MB transferred before the title screen is playable, and 60 fps on a mid-range phone at the default tier.
 
+## Version 1 cut
+
+On 17 October 2026 Hugo cut version 1 down to a small, funny, working game: title, chase, bust, and retry, with the score on screen and the best score kept in the browser. Version 1 ships phases 0 to 3, the look from phase 1, the assets from phase 2, and a plain title, HUD, and busted screen from phase 5.
+
+These move to later: replay, video, sharing, the daily chase and its shared seed, sound, the settings menu, the PWA, automatic quality tiers, the launch kit, and accounts. Phases 4, 6, and 7 below stay as the plan for after version 1. Version 1 counts a near miss only for a car cleared with a hop or a roll. Near misses for swerving out of a car's lane, and for cops, come later.
+
 ## Phases
 
 ### Phase 0. Scaffold

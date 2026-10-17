@@ -1,10 +1,10 @@
 # Highway scene
 
-The game opens straight into the look-dev highway at golden hour. A painted sunset sky with 3D cloud puffs sits over sand dunes, mesas and a far ridge that fade into stepped haze. On the three-lane road, the silver placeholder Roadster drives ahead of the camera and a black-and-cream police car lines up beside it, its light bar tinting the road red and blue. Traffic drives ahead. The view fills any viewport, landscape or portrait, without scrollbars.
+The title screen sits over the highway at golden hour. A painted sunset sky with 3D cloud puffs sits over sand dunes, mesas and a far ridge that fade into stepped haze. On the empty three-lane road, the silver Roadster drives ahead of the camera, and the road scrolls with the distance it covers. Cops and traffic appear only during a run (see [Chase run](./chase-run.md)). The view fills any viewport, landscape or portrait, without scrollbars.
 
 ## Sub-features
 
-- `scene-render` draws the sky, the haze planes, the road, the Roadster, the police car, and traffic.
+- `scene-render` draws the sky, the haze planes, the road, and the silver Roadster behind the title menu.
 - `scene-fit` fills the viewport and refits on resize and rotation.
 - `scene-dpr` renders at the device pixel ratio, capped at 2.
 - `scene-portrait` widens the view and pulls the camera back on a portrait screen, so all three lanes stay in view.
@@ -13,7 +13,7 @@ The game opens straight into the look-dev highway at golden hour. A painted suns
 
 ## How to get to it (user POV)
 
-- Open the game URL. There is no menu yet.
+- Open the game URL. The title menu covers the middle of the scene.
 
 ## Driving it with T3 preview and Playwright
 
@@ -21,7 +21,7 @@ Preconditions:
 
 - A dev server reports `doctor: OK`.
 
-- **Desktop.** Open a blank tab, resize to 1280x720, and navigate to `/?still&dpr=1`. `preview_evaluate` (expression in SKILL.md) returns `css` `[1280, 720]` and `buffer` `[1280, 720]`. `preview_snapshot` with `save: true` shows the sunset sky above the road with the silver Roadster in the lower centre, and `consoleEntries` holds no error.
+- **Desktop.** Open a blank tab, resize to 1280x720, and navigate to `/?still&dpr=1`. `preview_evaluate` (expression in SKILL.md) returns `css` `[1280, 720]` and `buffer` `[1280, 720]`. `preview_snapshot` with `save: true` shows the sunset sky above the road with the silver Roadster in the lower centre under the title menu, and `consoleEntries` holds no error.
 - **Phone.** Resize to 390x844 and navigate again. `css` and `buffer` are `[390, 844]`. All three lanes and the whole Roadster are visible.
 - **Low tier.** Navigate to `/?still&dpr=1&tier=low&debug`. `preview_evaluate` of `window.__roadster.tier` returns `{ tier: 'low', reason: 'requested' }`, and the frame shows the same scene without bloom.
 - **Pixel-ratio cap.** Run `~/projects/agentbox/scripts/heavy timeout 180s npm run test:e2e`. The `phone` project runs at device scale 3 and asserts a buffer at ratio 2, which is 780x1688.
