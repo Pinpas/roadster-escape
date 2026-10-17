@@ -1,6 +1,8 @@
 import './style.css';
+import { exposeDebug } from './render/debug';
 import { parseRenderFlags } from './render/flags';
 import { createLoop } from './render/loop';
+import { parseTier } from './render/quality';
 import { createView } from './render/scene';
 import { STEP_SECONDS } from './sim/fixed-step';
 import { mountDebugOverlay } from './ui/debug-overlay';
@@ -10,11 +12,11 @@ const canvas = document.querySelector<HTMLCanvasElement>('#game');
 if (!canvas) throw new Error('index.html is missing the #game canvas');
 
 const flags = parseRenderFlags(location.search);
-const view = createView(canvas, flags.pixelRatio);
+const params = new URLSearchParams(location.search);
+const view = createView(canvas, flags.pixelRatio, parseTier(location.search));
 mountVersionLabel(document.body);
-const debugOverlay = new URLSearchParams(location.search).has('debug')
-  ? mountDebugOverlay(document.body)
-  : undefined;
+const debugOverlay = params.has('debug') ? mountDebugOverlay(document.body) : undefined;
+if (params.has('debug')) exposeDebug(view, canvas);
 
 const loop = createLoop({
   flags,

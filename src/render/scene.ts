@@ -1,53 +1,112 @@
 import {
-  BoxGeometry,
   Color,
   DirectionalLight,
   HemisphereLight,
   MathUtils,
-  Mesh,
-  MeshLambertMaterial,
+  PCFShadowMap,
   PerspectiveCamera,
-  PlaneGeometry,
   Scene,
+  Vector3,
   WebGLRenderer,
 } from 'three';
+import { SUN_DIR } from './look/haze';
+import { highMaterials, highToon } from './look/materials-high';
+import { lowMaterials, lowToon } from './look/materials-low';
+import { createPost } from './look/post';
+import { createSky } from './look/sky';
+import { tune } from './look/tune';
+import { palette } from './palette';
+import { probeCaps, resolveTier, type GpuCaps, type Tier, type TierChoice } from './quality';
+import { chaseCamera, createHighway } from './world/highway';
 
 const MAX_PIXEL_RATIO = 2;
-const BOX_TURNS_PER_SECOND = 0.25;
-const VERTICAL_FOV = 60;
-// Portrait phones widen the view instead of cropping its sides.
-const MIN_HORIZONTAL_FOV = 50;
+const POWER = 'high-performance';
+const VERTICAL_FOV = 50;
+// Portrait phones widen the view instead of cropping the lanes at the sides.
+const MIN_HORIZONTAL_FOV = 38;
 
-export interface View {
-  /** Draws one frame; `simSeconds` is the interpolated simulation time. */
-  render(simSeconds: number): void;
+export interface FrameStats {
+  /** Draw calls and triangles of the last frame, shadow pass and post pass included. */
+  readonly calls: number;
+  readonly triangles: number;
 }
 
-export function createView(canvas: HTMLCanvasElement, fixedPixelRatio: number | undefined): View {
-  const renderer = new WebGLRenderer({ canvas, antialias: true });
+export interface View {
+  readonly tier: TierChoice;
+  /** Draws one frame; `simSeconds` is the interpolated simulation time. */
+  render(simSeconds: number): void;
+  stats(): FrameStats;
+}
+
+/** Ask a throwaway WebGL2 context on the same GPU what it can do, before the real renderer picks its MSAA. */
+function probe(): GpuCaps {
+  const gl = document.createElement('canvas').getContext('webgl2', { powerPreference: POWER });
+  if (!gl) return { halfFloatTarget: false, halfFloatSamples: 0 };
+  const caps = probeCaps(gl);
+  gl.getExtension('WEBGL_lose_context')?.loseContext();
+  return caps;
+}
+
+/** One shadow-casting sun with a small map that follows the car. */
+function createSun(): DirectionalLight {
+  const sun = new DirectionalLight(new Color(palette.sun), tune.sunIntensity);
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(1024, 1024);
+  Object.assign(sun.shadow.camera, {
+    left: -28,
+    right: 28,
+    top: 28,
+    bottom: -28,
+    near: 1,
+    far: 260,
+  });
+  sun.shadow.bias = -0.0004;
+  sun.shadow.normalBias = 0.14;
+  sun.shadow.radius = 2.5;
+  return sun;
+}
+
+export function createView(
+  canvas: HTMLCanvasElement,
+  fixedPixelRatio: number | undefined,
+  requestedTier: Tier | undefined,
+): View {
+  const caps = probe();
+  const tier = resolveTier(requestedTier, caps);
+  const high = tier.tier === 'high';
+  // The high tier draws only the post triangle to the canvas, so the canvas needs no depth buffer.
+  const renderer = new WebGLRenderer({
+    canvas,
+    antialias: !high,
+    depth: !high,
+    powerPreference: POWER,
+  });
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = PCFShadowMap;
+  renderer.info.autoReset = false;
 
   const scene = new Scene();
-  scene.background = new Color('#5b8fd9');
+  const highway = createHighway();
+  const material = high ? highMaterials() : lowMaterials();
+  for (const part of highway.parts) part.mesh.material = material(part);
+  scene.add(highway.root);
 
-  scene.add(new HemisphereLight('#5b8fd9', '#e8a565', 1.2));
-  const sun = new DirectionalLight('#ffe3b0', 2);
-  sun.position.set(-4, 6, 3);
-  scene.add(sun);
-
-  const ground = new Mesh(
-    new PlaneGeometry(400, 400),
-    new MeshLambertMaterial({ color: '#e8a565' }),
+  const sky = createSky(
+    high
+      ? highToon({ hero: true, cloud: true, hazeScale: tune.cloudFog })
+      : lowToon({ role: 'cloud', hazeScale: tune.cloudFog }),
+    high ? 1 : 0,
   );
-  ground.rotation.x = -Math.PI / 2;
-  scene.add(ground);
+  scene.add(sky.dome, sky.clouds);
 
-  const box = new Mesh(new BoxGeometry(1.8, 0.8, 4), new MeshLambertMaterial({ color: '#e8322e' }));
-  box.position.y = 0.4;
-  scene.add(box);
+  const sun = createSun();
+  scene.add(sun, sun.target);
+  if (high) scene.add(new HemisphereLight(tune.hemiSky, tune.hemiGround, tune.hemiIntensity));
 
-  const camera = new PerspectiveCamera(VERTICAL_FOV, 1, 0.1, 500);
-  camera.position.set(0, 3, 8);
-  camera.lookAt(0, 0.5, 0);
+  const camera = new PerspectiveCamera(VERTICAL_FOV, 1, 0.5, 5000);
+  const rig = { position: new Vector3(), target: new Vector3() };
+  let portrait = 0;
+  const post = high ? createPost(renderer, Math.min(4, caps.halfFloatSamples)) : undefined;
 
   // Checking every frame catches window resizes, rotation, and pixel-ratio changes alike.
   const fitToCanvas = (): void => {
@@ -63,6 +122,7 @@ export function createView(canvas: HTMLCanvasElement, fixedPixelRatio: number | 
     }
     renderer.setPixelRatio(pixelRatio);
     renderer.setSize(width, height, false);
+    post?.resize(width, height, pixelRatio);
     camera.aspect = width / height;
     const halfWidth = Math.tan(MathUtils.degToRad(MIN_HORIZONTAL_FOV / 2));
     camera.fov = Math.max(
@@ -70,13 +130,25 @@ export function createView(canvas: HTMLCanvasElement, fixedPixelRatio: number | 
       MathUtils.radToDeg(2 * Math.atan(halfWidth / camera.aspect)),
     );
     camera.updateProjectionMatrix();
+    portrait = 1 - MathUtils.smoothstep(camera.aspect, 0.5, 1.3);
   };
 
   return {
+    tier,
     render(simSeconds) {
       fitToCanvas();
-      box.rotation.y = simSeconds * BOX_TURNS_PER_SECOND * Math.PI * 2;
-      renderer.render(scene, camera);
+      highway.update(simSeconds);
+      chaseCamera(highway.hero, simSeconds, portrait, rig);
+      camera.position.copy(rig.position);
+      camera.lookAt(rig.target);
+      sun.target.position.copy(highway.focus);
+      sun.position.copy(highway.focus).addScaledVector(SUN_DIR, 120);
+      sky.follow(camera.position.x, camera.position.y, camera.position.z, simSeconds);
+
+      renderer.info.reset();
+      if (post) post.render(scene, camera);
+      else renderer.render(scene, camera);
     },
+    stats: () => ({ calls: renderer.info.render.calls, triangles: renderer.info.render.triangles }),
   };
 }
