@@ -1,24 +1,27 @@
 import './style.css';
+import { parseRenderFlags } from './render/flags';
+import { createLoop } from './render/loop';
 import { createView } from './render/scene';
-import { STEP_SECONDS, advanceClock } from './sim/fixed-step';
+import { STEP_SECONDS } from './sim/fixed-step';
 
 const canvas = document.querySelector<HTMLCanvasElement>('#game');
 if (!canvas) throw new Error('index.html is missing the #game canvas');
 
-const view = createView(canvas);
-let accumulator = 0;
-let tick = 0;
-let lastFrameMs: number | undefined;
+const flags = parseRenderFlags(location.search);
+const view = createView(canvas, flags.pixelRatio);
 
-const frame = (nowMs: number): void => {
-  const advance = advanceClock(
-    accumulator,
-    lastFrameMs === undefined ? 0 : (nowMs - lastFrameMs) / 1000,
-  );
-  lastFrameMs = nowMs;
-  accumulator = advance.accumulator;
-  tick += advance.steps;
-  view.render((tick + advance.alpha) * STEP_SECONDS);
-  requestAnimationFrame(frame);
-};
-requestAnimationFrame(frame);
+const loop = createLoop({
+  flags,
+  scheduler: {
+    request: (callback) => requestAnimationFrame(callback),
+    cancel: (handle) => {
+      cancelAnimationFrame(handle);
+    },
+    isHidden: () => document.hidden,
+  },
+  render: ({ tick, alpha }) => {
+    view.render((tick + alpha) * STEP_SECONDS);
+  },
+});
+document.addEventListener('visibilitychange', loop.visibilityChanged);
+loop.start();

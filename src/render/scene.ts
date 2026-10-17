@@ -23,7 +23,7 @@ export interface View {
   render(simSeconds: number): void;
 }
 
-export function createView(canvas: HTMLCanvasElement): View {
+export function createView(canvas: HTMLCanvasElement, fixedPixelRatio: number | undefined): View {
   const renderer = new WebGLRenderer({ canvas, antialias: true });
 
   const scene = new Scene();
@@ -51,7 +51,7 @@ export function createView(canvas: HTMLCanvasElement): View {
 
   // Checking every frame catches window resizes, rotation, and pixel-ratio changes alike.
   const fitToCanvas = (): void => {
-    const pixelRatio = Math.min(window.devicePixelRatio, MAX_PIXEL_RATIO);
+    const pixelRatio = fixedPixelRatio ?? Math.min(window.devicePixelRatio, MAX_PIXEL_RATIO);
     const width = canvas.clientWidth;
     const height = canvas.clientHeight;
     if (
