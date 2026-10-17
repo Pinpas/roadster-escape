@@ -19,6 +19,7 @@ Every encode and every capability probe is uploaded to `out/` on the dev server,
 npm run verify       # headless Chromium: encode both sizes, click Share, ffprobe, decode and PSNR each MP4 (ENCODER, COPY, FPS, BITRATE)
 node scripts/bench.mjs   # 5 alternating runs: 30 fps with and without the 2D frame copy, and 60 fps
 npm run size         # minified and gzipped size of the muxer options
+node scripts/stall-test.mjs   # patch VideoEncoder to stall or emit nothing; both encodes must fail
 ```
 
 Run each one through `~/projects/agentbox/scripts/heavy` with a `timeout`. Headless Chromium needs `--use-angle=vulkan` for WebGL on the real GPU; `scripts/gl-probe.mjs` lists the flag sets that were tried.

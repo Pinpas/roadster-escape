@@ -10,7 +10,7 @@ const ffmpeg = require('ffmpeg-static');
 
 const base = process.env.SPIKE_URL ?? 'http://127.0.0.1:5104/';
 const fps = process.env.FPS ?? '30';
-const path = process.env.ENCODER ?? 'auto';
+const path = process.env.ENCODER ?? 'webcodecs';
 const bitrate = process.env.BITRATE ?? '6000000';
 const copy = process.env.COPY ?? '1';
 const label = process.env.LABEL ?? `${path}-copy${copy}`;

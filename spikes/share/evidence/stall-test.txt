@@ -1,0 +1,2 @@
+pass encoder emits nothing: Error: EncoderDroppedFrames: 0 of 150 frames encoded after 1260 ms
+pass flush never resolves: Error: EncoderStalled: no packet for 5000 ms after 7261 ms

@@ -1,6 +1,6 @@
 {
   "label": "webcodecs-copy0",
-  "startedAt": 1792241184886,
+  "startedAt": 1792242365836,
   "fps": "30",
   "path": "webcodecs",
   "bitrate": "6000000",
@@ -12,12 +12,12 @@
     "--enable-features=Vulkan"
   ],
   "readbackMs": {
-    "portrait": 84,
-    "landscape": 86
+    "portrait": 204,
+    "landscape": 142
   },
   "share": {
     "download": "roadster-escape-replay.mp4",
-    "bytes": 1577731,
+    "bytes": 1577951,
     "popup": "https://x.com/intent/tweet?text=I+escaped+3+cops+in+Roadster+Escape.+Daily+chase+2026-10-17%2C+score+12+480.&url=http%3A%2F%2F127.0.0.1%3A5104%2F"
   },
   "caps": {
@@ -92,9 +92,9 @@
         }
       },
       "frames": 150,
-      "wallMs": 1117,
-      "renderMs": 80,
-      "bytes": 1428537,
+      "wallMs": 1179,
+      "renderMs": 110,
+      "bytes": 1424363,
       "xSafe": true,
       "shareRoute": "download-and-intent",
       "selfCheck": {
@@ -130,9 +130,9 @@
         }
       },
       "frames": 150,
-      "wallMs": 1127,
-      "renderMs": 64,
-      "bytes": 1577731,
+      "wallMs": 1319,
+      "renderMs": 89,
+      "bytes": 1577951,
       "xSafe": true,
       "shareRoute": "download-and-intent",
       "selfCheck": {
@@ -147,11 +147,11 @@
   ],
   "files": [
     {
-      "file": "Linux-2026-10-17T12-46-26-874Z-portrait-30-webcodecs-6M.mp4",
-      "bytes": 1428537,
+      "file": "Linux-2026-10-17T13-06-08-156Z-portrait-30-webcodecs-6M.mp4",
+      "bytes": 1424363,
       "format": "mov,mp4,m4a,3gp,3g2,mj2",
       "duration": 5,
-      "bit_rate": 2285659,
+      "bit_rate": 2278980,
       "streams": [
         {
           "type": "video",
@@ -165,14 +165,14 @@
       ],
       "decodeExit": 0,
       "decodeErrors": "none",
-      "psnrVsCanvasAt2_5s": 43.188892
+      "psnrVsCanvasAt2_5s": 43.189112
     },
     {
-      "file": "Linux-2026-10-17T12-46-28-148Z-landscape-30-webcodecs-6M.mp4",
-      "bytes": 1577731,
+      "file": "Linux-2026-10-17T13-06-09-706Z-landscape-30-webcodecs-6M.mp4",
+      "bytes": 1577951,
       "format": "mov,mp4,m4a,3gp,3g2,mj2",
       "duration": 5,
-      "bit_rate": 2524369,
+      "bit_rate": 2524721,
       "streams": [
         {
           "type": "video",
@@ -186,14 +186,14 @@
       ],
       "decodeExit": 0,
       "decodeErrors": "none",
-      "psnrVsCanvasAt2_5s": 42.760088
+      "psnrVsCanvasAt2_5s": 42.759865
     },
     {
       "file": "share-download-roadster-escape-replay.mp4",
-      "bytes": 1577731,
+      "bytes": 1577951,
       "format": "mov,mp4,m4a,3gp,3g2,mj2",
       "duration": 5,
-      "bit_rate": 2524369,
+      "bit_rate": 2524721,
       "streams": [
         {
           "type": "video",
