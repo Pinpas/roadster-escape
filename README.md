@@ -62,9 +62,12 @@ These flags make the game cheap to run in a software-rendered test browser.
 | `?fps=N` | Renders at most N frames per second. The simulation still steps at 60 Hz. |
 | `?still` | Renders one frame, then stops the loop. |
 | `?dpr=N` | Renders at pixel ratio N, up to 4, instead of the device pixel ratio, which is capped at 2. |
-| `?debug` | Shows the version, the render rate, and the simulation tick. |
+| `?tier=low` | Forces the low quality tier: one toon shader, no render target, no bloom. `?tier=high` asks for the default tier. |
+| `?debug` | Shows the version, the render rate, and the simulation tick, and exposes `window.__roadster` with the chosen tier, last-frame draw calls and triangles, and `bench(frames)`. |
 
 The loop also stops while the page is hidden.
+
+Phones that cannot render to half-float targets get the low tier automatically. The look itself, its palette and its two tiers are described in [Art direction](docs/ART_DIRECTION.md).
 
 ### Base path
 
