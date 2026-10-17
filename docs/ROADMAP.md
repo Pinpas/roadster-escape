@@ -22,7 +22,7 @@ The repository builds, runs, and deploys an empty scene.
 - Vite, TypeScript, Three.js, ESLint, Prettier, and Vitest.
 - A dev server on `0.0.0.0:5100`.
 - GitHub Actions that run lint, type checks, tests, and a production build on every pull request.
-- A GitHub Pages workflow that deploys `main`.
+- Cloudflare Workers with static assets, deployed by Workers Builds: `main` to production and every other branch to a Worker Preview.
 - A verification skill for agents, made with `/t3-pstack:create-verification-skill`.
 
 **Done when** the empty scene renders in a phone browser and CI is green.
