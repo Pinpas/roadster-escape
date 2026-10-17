@@ -24,6 +24,7 @@ export const shared = {
   uShadowHue: { value: c(tune.shadowTint) },
   uShadowShift: { value: tune.shadowShift },
   uLitAmbient: { value: tune.litAmbient },
+  uMesaAmbient: { value: tune.mesaAmbient },
   uRim: { value: c(tune.rim).multiplyScalar(tune.rimStrength) },
 };
 {
@@ -49,8 +50,8 @@ const fogGLSL = /* glsl */ `
   vec3 bRay = vBWorld - cameraPosition;
   float bDist = length(bRay);
   float bLow = 1.0 - smoothstep(0.0, uHazeHeight, vBWorld.y);
-  float bDensity = fogDensity * B_FOG_SCALE * mix(0.5, 1.0, bLow);
-  float fogFactor = 1.0 - exp(-bDensity * bDist);
+  float bOD = fogDensity * B_FOG_SCALE * mix(0.6, 1.0, bLow) * bDist;
+  float fogFactor = 1.0 - exp(-bOD * sqrt(bOD));
   fogFactor = max(fogFactor, smoothstep(1900.0, 3100.0, bDist) * bLow * B_FOG_SCALE);
   gl_FragColor.rgb = mix(gl_FragColor.rgb, bHaze(bRay / bDist), fogFactor);
 #endif
@@ -63,7 +64,7 @@ function patchFog(shader: WebGLProgramParametersWithUniforms) {
     .replace('#include <common>', '#include <common>\nvarying vec3 vBWorld;')
     .replace('#include <fog_vertex>', '#include <fog_vertex>\nvBWorld = (modelMatrix * vec4(transformed, 1.0)).xyz;');
   shader.fragmentShader = shader.fragmentShader
-    .replace('#include <common>', `#include <common>\nvarying vec3 vBWorld;\n${hazeGLSL}\nuniform vec3 uShadowHue;\nuniform float uShadowShift;\nuniform float uLitAmbient;\nuniform vec3 uRim;`)
+    .replace('#include <common>', `#include <common>\nvarying vec3 vBWorld;\n${hazeGLSL}\nuniform vec3 uShadowHue;\nuniform float uShadowShift;\nuniform float uLitAmbient;\nuniform float uMesaAmbient;\nuniform vec3 uRim;`)
     .replace('#include <fog_fragment>', fogGLSL);
 }
 
@@ -79,12 +80,20 @@ float bSun = 0.0;
   bSun = saturate(dot(reflectedLight.directDiffuse, vec3(0.2126, 0.7152, 0.0722)) / max(bFull, 1e-5));
 #endif
 float bL = dot(bInd, vec3(0.2126, 0.7152, 0.0722));
-bInd = mix(mix(bInd, bL * uShadowHue, uShadowShift), bInd * uLitAmbient, bSun);
+#ifdef B_HERO
+  float bShift = uShadowShift * 0.5;
+#else
+  float bShift = uShadowShift;
+#endif
+bInd = mix(mix(bInd, bL * uShadowHue, bShift), bInd * uLitAmbient, bSun);
+#ifdef B_MESA
+  bInd *= uMesaAmbient;
+#endif
 vec3 outgoingLight = reflectedLight.directDiffuse + bInd + totalEmissiveRadiance;
 float bF = 1.0 - saturate(dot(normal, normalize(vViewPosition)));
 #if defined(B_HERO) && NUM_DIR_LIGHTS > 0
   float bToward = 0.3 + 0.7 * smoothstep(-0.15, 0.45, dot(normal, directionalLights[0].direction));
-  outgoingLight += uRim * smoothstep(0.72, 0.96, bF) * bToward;
+  outgoingLight += uRim * smoothstep(0.68, 0.95, bF) * bToward;
 #endif
 #ifdef B_GLASS
   outgoingLight += mix(uSkyTop, uHaze, 0.35) * (0.08 + 0.55 * bF * bF);
@@ -147,7 +156,7 @@ export function materialPicker(): (part: Part) => Material {
   const hero = toon({ B_HERO: '' });
   const heroGlass = toon({ B_HERO: '', B_GLASS: '' });
   const glass = toon({ B_GLASS: '' });
-  const rock = toon({}, tune.mesaFog);
+  const rock = toon({ B_MESA: '' }, tune.mesaFog);
   const lamp = glow(tune.emissiveGain);
   return (p) => {
     if (p.role === 'emissive') return lamp;

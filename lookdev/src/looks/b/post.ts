@@ -26,6 +26,7 @@ const fragmentShader = /* glsl */ `
 uniform sampler2D tScene;
 uniform vec3 uLods;
 uniform float uBloom;
+uniform float uDiffuse;
 uniform float uThreshold;
 uniform float uExposure;
 uniform vec3 uLift;
@@ -77,7 +78,7 @@ vec3 bright(vec3 c) {
 
 vec3 neutralCurve(vec3 color) {
   const float start = 0.76;
-  const float desat = 0.15;
+  const float desat = 0.08;
   float x = min(color.r, min(color.g, color.b));
   float offset = x < 0.08 ? x - 6.25 * x * x : 0.04;
   color -= offset;
@@ -96,8 +97,11 @@ vec3 toSRGB(vec3 c) {
 
 void main() {
   vec3 hdr = textureLod(tScene, vUv, 0.0).rgb;
-  vec3 bloom = 0.5 * bright(bspline(uLods.x)) + 0.32 * bright(bspline(uLods.y)) + 0.22 * bright(bspline(uLods.z));
-  vec3 c = (hdr + bloom * uBloom) * uExposure;
+  vec3 m0 = bspline(uLods.x);
+  vec3 m1 = bspline(uLods.y);
+  vec3 m2 = bspline(uLods.z);
+  vec3 bloom = 0.5 * bright(m0) + 0.32 * bright(m1) + 0.22 * bright(m2);
+  vec3 c = (mix(hdr, m1, uDiffuse) + bloom * uBloom) * uExposure;
   c = neutralCurve(c);
   c = c * uGain + uLift * (1.0 - c);
   c = pow(max(c, 0.0), 1.0 / uGamma);
@@ -128,6 +132,7 @@ export function createPost(renderer: WebGLRenderer) {
       tScene: { value: target.texture },
       uLods: { value: new Vector3(2, 4, 6) },
       uBloom: { value: tune.bloom },
+      uDiffuse: { value: tune.diffuse },
       uThreshold: { value: tune.bloomThreshold },
       uExposure: { value: tune.exposure },
       uLift: { value: v3(tune.lift) },
