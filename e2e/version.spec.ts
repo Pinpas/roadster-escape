@@ -11,10 +11,13 @@ test('the corner label shows the package version and the commit', async ({ page 
 });
 
 test('?debug shows the version, the capped render rate, and the sim tick', async ({ page }) => {
-  await page.goto('/?debug&fps=10&dpr=1');
+  // The highway scene renders on the CPU in this test browser; the low tier at a tiny pixel ratio
+  // keeps each frame cheap enough that the ?fps=10 cap, not the renderer, sets the rate.
+  await page.goto('/?debug&fps=10&dpr=0.25&tier=low');
   const overlay = page.locator('.debug-overlay');
   await expect(overlay).toContainText(/render fps \d+/);
-  await page.waitForTimeout(1200);
+  // The overlay reports the last 500 ms; skip the shader-compile stalls right after load.
+  await page.waitForTimeout(3000);
   const [label = '', fpsLine = '', tickLine = ''] = (await overlay.innerText()).split('\n');
   expect(label).toMatch(versionText);
   const fps = Number(/render fps (\d+)/.exec(fpsLine)?.[1]);
