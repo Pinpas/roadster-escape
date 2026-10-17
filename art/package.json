@@ -1,0 +1,9 @@
+{
+  "name": "roadster-escape-art",
+  "private": true,
+  "description": "Asset pipeline tools for Roadster Escape. The Blender scripts live next to this file.",
+  "license": "MIT",
+  "devDependencies": {
+    "@gltf-transform/cli": "^4.5.1"
+  }
+}
