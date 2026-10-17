@@ -148,6 +148,8 @@ void main() {
     return;
   #endif
 
+  albedo = albedo * 0.94 + vec3(0.03, 0.026, 0.055);
+
   vec3 bq = vWorldPos * uBrushScale * uBrushStretch;
   float b1 = vnoise3(bq);
   float b2 = vnoise3(bq * 2.7 + 5.3);

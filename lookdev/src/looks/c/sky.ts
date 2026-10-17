@@ -61,6 +61,10 @@ export function createSky(uniforms: Record<string, IUniform>): Mesh {
         cloud = mix(cloud, mix(uCloudCore, uCloudBody, sunNear * 0.5), core);
         col = mix(col, cloud, cover);
 
+        float wisp = vnoise2(vec2(az * 2.2 + 3.0, h * 26.0)) * 0.7 + vnoise2(vec2(az * 7.0, h * 70.0)) * 0.3;
+        float high = smoothstep(0.2, 0.32, h) * (1.0 - smoothstep(0.62, 0.8, h));
+        col = mix(col, mix(uCloudBody, uCloudEdge, 0.5), smoothstep(0.6, 0.7, wisp) * high * 0.45);
+
         float disc = smoothstep(0.9993, 0.99965, s);
         col = mix(col, vec3(1.0, 0.96, 0.86), disc * (1.0 - cover * 0.7));
         gl_FragColor = vec4(col, 1.0);
