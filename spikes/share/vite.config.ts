@@ -32,6 +32,8 @@ function artifactSink(): Plugin {
 const https = process.env.SPIKE_HTTPS === '1';
 
 export default defineConfig({
+  base: './',
+  build: { license: true },
   plugins: [artifactSink(), ...(https ? [basicSsl()] : [])],
   server: {
     host: true,
