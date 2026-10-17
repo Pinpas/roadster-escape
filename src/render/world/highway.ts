@@ -15,9 +15,13 @@ import {
   type Object3D,
 } from 'three';
 import { palette } from '../palette';
+import { PUFF_SECONDS, type GasBurst } from '../fx/puffs';
+import { tumblePose } from '../fx/tumble';
 import { merge, paint, scatter, setColors, smooth } from './geometry';
 import {
   police,
+  POLICE_HEIGHT,
+  ROADSTER_NOZZLES,
   roadster,
   traffic,
   trafficColors,
@@ -44,6 +48,28 @@ const DASH_PERIOD = 12;
 const TILE = 300;
 const SPEED = 24;
 const TAU = Math.PI * 2;
+// Placeholder choreography until the simulation drives the scene: a hop every HOP_EVERY seconds,
+// and the police car missing its lunge and wiping out every WRECK_EVERY seconds. The offsets put
+// both mid-air at t = 0, the frame `?still` renders. A wrecked cop tumbles and slides behind for
+// WRECK_SECONDS, then catches up again from off-screen over RETURN_SECONDS.
+const HOP_EVERY = 5;
+const HOP_OFFSET = 0.15;
+const HOP_SECONDS = 0.8;
+const WRECK_EVERY = 8;
+const WRECK_OFFSET = 0.35;
+const WRECK_SECONDS = 3;
+const RETURN_SECONDS = 3;
+const PUFFS_PER_NOZZLE = 6;
+// The gas leaves the nozzles at the car's speed less a little exhaust, so it trails just behind.
+const GAS_VELOCITY = new Vector3(0, 0.6, -SPEED + 1);
+
+const cycle = (t: number, every: number, offset: number): number =>
+  (((t + offset) % every) + every) % every;
+const hopHeight = (t: number): number => {
+  const phase = cycle(t, HOP_EVERY, HOP_OFFSET);
+  return phase < HOP_SECONDS ? Math.sin((Math.PI * phase) / HOP_SECONDS) * 1.5 : 0;
+};
+const roadsterX = (t: number): number => Math.sin(t * 0.37) * 0.36;
 
 export interface Highway {
   readonly root: Group;
@@ -52,6 +78,8 @@ export interface Highway {
   readonly focus: Vector3;
   /** The Roadster's position; the chase camera follows it. */
   readonly hero: Vector3;
+  /** The gas bursts still visible at time `t`: one per nozzle for each hop in the last puff lifetime. */
+  gasBursts(t: number): GasBurst[];
   /** Pose everything for time `t` in seconds. Pure in `t`, so a frozen frame always looks the same. */
   update(t: number): void;
 }
@@ -387,8 +415,9 @@ export function createHighway(): Highway {
   };
   const barRedOff = add(unlit(cop.barRed), policeRoot, plain('body', true));
   const barBlueOff = add(unlit(cop.barBlue), policeRoot, plain('body', true));
+  // The pool follows the cop over the road but never its tumble, so it stays flat on the asphalt.
   const pool = lightPool();
-  policeRoot.add(pool.mesh);
+  root.add(pool.mesh);
 
   const cars: Car[] = trafficPlan.map(({ kind, lane, z0, closing }, i) => ({
     root: vehicle(traffic(kind, trafficColors[i % trafficColors.length] ?? palette.sand), false),
@@ -406,15 +435,23 @@ export function createHighway(): Highway {
     hero: roadsterRoot.position,
     update(t) {
       const pz = -SPEED * t;
-      const sway = Math.sin(t * 0.37) * 0.9;
-      roadsterRoot.position.set(sway * 0.4, 0, pz);
-      roadsterRoot.rotation.z = -Math.cos(t * 0.37) * 0.02;
+      roadsterRoot.position.set(roadsterX(t), hopHeight(t), pz);
+      roadsterRoot.rotation.set(-hopHeight(t) * 0.05, 0, -Math.cos(t * 0.37) * 0.02);
+      const wreckAge = cycle(t, WRECK_EVERY, WRECK_OFFSET);
+      const wrecked = wreckAge < WRECK_SECONDS;
+      const returning = wreckAge - WRECK_SECONDS;
+      const behind =
+        !wrecked && returning < RETURN_SECONDS
+          ? WRECK_SECONDS * SPEED * (1 - smooth(0, RETURN_SECONDS, returning))
+          : 0;
       policeRoot.position.set(
         -LANE + Math.sin(t * 0.8) * 0.25,
         0,
-        pz - 1.5 + Math.sin(t * 0.5) * 1.2,
+        pz - 1.5 + Math.sin(t * 0.5) * 1.2 + behind,
       );
-      policeRoot.rotation.y = Math.sin(t * 0.8) * 0.03;
+      policeRoot.rotation.set(0, Math.sin(t * 0.8) * 0.03, 0);
+      pool.mesh.position.set(policeRoot.position.x, 0.03, policeRoot.position.z);
+      if (wrecked) tumblePose(wreckAge, 1, POLICE_HEIGHT, SPEED, policeRoot);
 
       const tileZ = Math.ceil(pz / TILE) * TILE;
       ground.position.z = tileZ;
@@ -438,9 +475,28 @@ export function createHighway(): Highway {
       barBlueOff.visible = redOn;
       pool.color.value.set(redOn ? palette.policeRed : palette.policeBlue);
       pool.strength.value = 0.55 + 0.15 * Math.sin(t * 31);
-      pool.mesh.position.x = redOn ? -0.6 : 0.6;
+      pool.mesh.position.x += redOn ? -0.6 : 0.6;
+      pool.mesh.visible = !wrecked;
 
       focus.set(roadsterRoot.position.x * 0.5, 0, pz - 14);
+    },
+    gasBursts(t) {
+      const bursts: GasBurst[] = [];
+      const first = Math.ceil((t - PUFF_SECONDS + HOP_OFFSET) / HOP_EVERY);
+      const last = Math.floor((t + HOP_OFFSET) / HOP_EVERY);
+      for (let k = first; k <= last; k++) {
+        const time = k * HOP_EVERY - HOP_OFFSET;
+        const at = new Vector3(roadsterX(time), 0, -SPEED * time);
+        for (const [x, y, z] of [...ROADSTER_NOZZLES.rear, ...ROADSTER_NOZZLES.corner]) {
+          bursts.push({
+            time,
+            origin: new Vector3(x, y, z).add(at),
+            velocity: GAS_VELOCITY,
+            count: PUFFS_PER_NOZZLE,
+          });
+        }
+      }
+      return bursts;
     },
   };
 }

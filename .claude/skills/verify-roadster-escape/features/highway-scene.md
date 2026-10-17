@@ -1,6 +1,6 @@
 # Highway scene
 
-The game opens straight into the look-dev highway at golden hour. A painted sunset sky with 3D cloud puffs sits over sand dunes, mesas and a far ridge that fade into stepped haze. On the three-lane road, the silver placeholder Roadster drives ahead of the camera and a black-and-cream police car lines up beside it, its light bar tinting the road red and blue. Traffic drives ahead. The view fills any viewport, landscape or portrait, without scrollbars.
+The game opens straight into the look-dev highway at golden hour. A painted sunset sky with 3D cloud puffs sits over sand dunes, mesas and a far ridge that fade into stepped haze. On the three-lane road, the silver placeholder Roadster drives ahead of the camera and a black-and-cream police car lines up beside it, its light bar tinting the road red and blue. Traffic drives ahead. Until the simulation drives the scene, the Roadster hops every 5 seconds with white gas puffs from its rear and corner nozzles, and the police car misses its lunge every 8 seconds, tumbles onto its roof, slides behind and catches up again. In the `?still` frame both are mid-air. The view fills any viewport, landscape or portrait, without scrollbars.
 
 ## Sub-features
 

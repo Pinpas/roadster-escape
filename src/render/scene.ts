@@ -9,6 +9,7 @@ import {
   Vector3,
   WebGLRenderer,
 } from 'three';
+import { createPuffs } from './fx/puffs';
 import { SUN_DIR } from './look/haze';
 import { highMaterials, highToon } from './look/materials-high';
 import { lowMaterials, lowToon } from './look/materials-low';
@@ -99,6 +100,9 @@ export function createView(
   );
   scene.add(sky.dome, sky.clouds);
 
+  const puffs = createPuffs();
+  scene.add(puffs.mesh);
+
   const sun = createSun();
   scene.add(sun, sun.target);
   if (high) scene.add(new HemisphereLight(tune.hemiSky, tune.hemiGround, tune.hemiIntensity));
@@ -144,6 +148,7 @@ export function createView(
       sun.target.position.copy(highway.focus);
       sun.position.copy(highway.focus).addScaledVector(SUN_DIR, 120);
       sky.follow(camera.position.x, camera.position.y, camera.position.z, simSeconds);
+      puffs.update(simSeconds, highway.gasBursts(simSeconds));
 
       renderer.info.reset();
       if (post) post.render(scene, camera);

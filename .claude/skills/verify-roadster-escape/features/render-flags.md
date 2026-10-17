@@ -9,6 +9,9 @@ URL flags let a tester or an agent run the game cheaply. They change only how of
 - `flag-dpr` renders at pixel ratio `?dpr=N`.
 - `pause-hidden` stops the loop while the page is hidden and resumes when it is visible.
 - `flag-malformed` ignores malformed values such as `?fps=0` or `?dpr=abc`.
+- `flag-tier` forces the low quality tier with `?tier=low` (see the highway scene feature).
+- `flag-debug` exposes `window.__roadster` with the tier, frame stats and `bench(frames)`.
+- `flag-busted` shows the BUSTED stamp over the running scene.
 
 ## How to get to it (user POV)
 

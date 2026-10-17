@@ -28,8 +28,9 @@ const sampleScreen = async (page: Page): Promise<Sample> => {
     for (let gy = 0; gy < 40; gy++) {
       for (let gx = 0; gx < 40; gx++) {
         const [r = 0, g = 0, b = 0] = pixel(0.3 + gx * 0.01, 0.55 + gy * 0.00875);
-        // The graded silver body is bright and cool; the violet road is dark, the lit sand low in blue.
-        if (0.2126 * r + 0.7152 * g + 0.0722 * b > 140 && b > 130) roadsterPixels++;
+        // The graded silver body is bright and warm (red at least as high as blue); the violet road
+        // is dark, the lit sand low in blue, and the white-blue gas puffs bluer than red.
+        if (0.2126 * r + 0.7152 * g + 0.0722 * b > 140 && b > 130 && r >= b) roadsterPixels++;
         centreHash = (centreHash * 31 + r + g * 7 + b * 13) >>> 0;
       }
     }

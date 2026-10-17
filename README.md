@@ -64,6 +64,7 @@ These flags make the game cheap to run in a software-rendered test browser.
 | `?dpr=N` | Renders at pixel ratio N, up to 4, instead of the device pixel ratio, which is capped at 2. |
 | `?tier=low` | Forces the low quality tier: one toon shader, no render target, no bloom. `?tier=high` asks for the default tier. |
 | `?debug` | Shows the version, the render rate, and the simulation tick, and exposes `window.__roadster` with the chosen tier, last-frame draw calls and triangles, and `bench(frames)`. |
+| `?busted` | Shows the BUSTED stamp over the running scene, until the busted screen exists. |
 
 The loop also stops while the page is hidden.
 

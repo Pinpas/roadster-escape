@@ -10,6 +10,15 @@ export interface VehicleGeo {
   readonly length: number;
 }
 
+/** The Roadster's rear and corner nozzle mouths in its local space, for gas bursts. */
+export const ROADSTER_NOZZLES = {
+  rear: [-0.45, -0.15, 0.15, 0.45].map((x) => [x, 0.45, 2.3] as const),
+  corner: [-0.88, 0.88].map((x) => [x, 0.115, 2.02] as const),
+};
+
+/** Height of the police car to the top of its light bar, in metres. */
+export const POLICE_HEIGHT = 2.0;
+
 export interface PoliceGeo extends VehicleGeo {
   readonly barRed: BufferGeometry;
   readonly barBlue: BufferGeometry;
@@ -107,8 +116,8 @@ export function roadster(): VehicleGeo {
     paint(new CylinderGeometry(0.045, 0.045, 0.02, 10), palette.thruster, { at: [x, y, z], rot });
   const emissive = merge([
     paint(box(1.94, 0.06, 0.04, 0.02, 1), palette.policeRed, { at: [0, 0.88, rear + 0.01] }),
-    ...[-0.45, -0.15, 0.15, 0.45].map((x) => nozzle(x, 0.45, rear + 0.1, [Math.PI / 2, 0, 0])),
-    ...[-0.88, 0.88].map((x) => nozzle(x, 0.115, rear - 0.18, [0, 0, 0])),
+    ...ROADSTER_NOZZLES.rear.map(([x, y, z]) => nozzle(x, y, z, [Math.PI / 2, 0, 0])),
+    ...ROADSTER_NOZZLES.corner.map(([x, y, z]) => nozzle(x, y, z, [0, 0, 0])),
     paint(box(0.5, 0.04, 0.04, 0.01, 1), palette.lanePaint, { at: [-0.6, 0.62, -rear + 0.04] }),
     paint(box(0.5, 0.04, 0.04, 0.01, 1), palette.lanePaint, { at: [0.6, 0.62, -rear + 0.04] }),
   ]);

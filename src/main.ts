@@ -1,5 +1,6 @@
 import './style.css';
 import { exposeDebug } from './render/debug';
+import { createStamp } from './render/fx/stamp';
 import { parseRenderFlags } from './render/flags';
 import { createLoop } from './render/loop';
 import { parseTier } from './render/quality';
@@ -17,6 +18,8 @@ const view = createView(canvas, flags.pixelRatio, parseTier(location.search));
 mountVersionLabel(document.body);
 const debugOverlay = params.has('debug') ? mountDebugOverlay(document.body) : undefined;
 if (params.has('debug')) exposeDebug(view, canvas);
+// Until the busted screen exists, `?busted` shows the stamp over the running scene.
+if (params.has('busted')) createStamp().show('BUSTED');
 
 const loop = createLoop({
   flags,
