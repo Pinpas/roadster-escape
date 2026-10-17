@@ -7,11 +7,11 @@ Part of #7. Status: the encode and the desktop route are measured on the box. Th
 ## The pipeline
 
 1. The sim records the run as its seed plus the actions on each tick (#10).
-2. On the busted screen, `src/share/` picks the best moment from the sim's events (#12). It then re-simulates the run headless from tick 0 up to a few seconds before that moment. Re-simulating a 3 minute run takes well under a second (#10), so the sim needs no snapshots for this (#11 stays optional).
-3. A replay timeline maps video time to sim time. The video runs at 30 fps. Most of the clip plays at 1x, and a perfect dodge plays slowed down, for example at 0.25x for one second. The sim still steps at its fixed 60 Hz. Only the sampling changes. For each video frame, the renderer draws the sim time that the timeline gives, interpolated between the two ticks around it (#13).
+2. On the busted screen, `src/share/` picks the best moment from the sim's events (#12). It then re-simulates the run headless from tick 0 up to a few seconds before that moment. #10 sets the budget: a 3 minute run must re-simulate in well under a second, on a desktop and on the test phone. While it does, the sim needs no snapshots (#11 stays optional).
+3. A replay timeline maps video time to sim time. The video runs at 30 fps. Most of the clip plays at 1x, and a perfect dodge plays slowed down, for example at 0.25x for one second, which is 2 video frames per sim tick. The sim still steps at its fixed 60 Hz. Only the sampling changes. For each video frame, the renderer draws the sim time that the timeline gives, interpolated between the two ticks around it (#13).
 4. The game's own renderer draws the replay. The busted screen covers the game canvas with an opaque overlay, sets its drawing buffer to 720x1280 at DPR 1, renders every replay frame into it, and restores the size afterwards. No second WebGL context exists, so no shader compiles twice and no texture uploads twice.
 5. Right after each render, in the same task, the frame goes to WebCodecs `VideoEncoder` with H.264. A same-task capture does not need `preserveDrawingBuffer`. [mediabunny](https://mediabunny.dev/) runs the encoder and writes an MP4 with the index at the front.
-6. A watchdog guards the encoder. If one frame or the final flush takes longer than 5 s, the encode stops. The encode also fails if the encoder emitted fewer packets than it got frames. On failure the busted screen retries once at 576x1024, then falls back to the X post with text and a link only. The spike implements both checks (`spikes/share/src/encode.ts`).
+6. A watchdog guards the encoder. If the encoder emits no packet for 5 s, the encode fails. It also fails if the encoder emitted fewer packets than it got frames. On failure the busted screen retries once at 576x1024, then falls back to the X post with text and a link only. mediabunny cannot cancel a flush that has started, so the game runs mediabunny in a Worker: the main thread renders, wraps each frame in a `VideoFrame`, and transfers it to the Worker. A stalled Worker is terminated before the retry. The spike runs both checks on the main thread, and `scripts/stall-test.mjs` proves that both fire ([`stall-test.txt`](../spikes/share/evidence/stall-test.txt)).
 7. The finished MP4 plays on the busted screen as the replay, in a `<video>` element. The player sees the exact file they will share. While the encode runs, the screen shows the run's stats.
 8. The **Share** button turns on when the encode is done. On a phone, a tap calls `navigator.share({ files: [mp4], text })`. On a desktop, a click downloads the MP4 and opens a prepared X post.
 
@@ -30,7 +30,7 @@ X's own media spec is written for API uploads ([X media best practices](https://
 | Property | Value | Reason |
 | --- | --- | --- |
 | Container | MP4, `moov` before `mdat` | mediabunny's default for an in-memory target. It also lets the busted screen's `<video>` start at once. |
-| Video | H.264 High, level 3.1 (`avc1.64001f`), `yuv420p`, key frame every 1 s | X recommends High. If the device cannot encode High, the encoder tries Main (`avc1.4d001f`), then Constrained Baseline (`avc1.42e01f`). Android requires only Baseline from hardware encoders. |
+| Video | H.264 High, level 3.1 (`avc1.64001f`), `yuv420p`, key frame every 1 s | X recommends High. If the device cannot encode High, the encoder tries Main (`avc1.4d001f`), then Constrained Baseline (`avc1.42e01f`). Android requires only Baseline from hardware encoders. The spike probes exactly these three strings. |
 | Size | 720x1280 (9:16) | X recommends it for portrait. 9:16 fills the screen in X's phone video tab, and 16:9 shows small there ([Kapwing](https://www.kapwing.com/resources/how-to-post-videos-on-x-in-2025-vertical-video-tab/)). |
 | Fallback size | 576x1024 | 9:16, a multiple of 16 in both directions, and inside the "32x32 to 1280x1024" limit that X's API page also states. |
 | Frame rate | 30 fps | 60 fps takes 2.0 times as long to encode and makes a 1.7 times larger file (measured below). Level 3.1 allows 720p only up to 30 fps. |
@@ -49,8 +49,8 @@ Hardware: MacBook Pro 2020, Intel i5 with Iris Plus 645, headless Chromium 156 w
 | 1280x720, 30 fps, 2D copy | 1.23 s (1.22 to 1.24) | 0.10 s | 1.58 MB |
 | 720x1280, 60 fps, 2D copy | 2.41 s (1.88 to 3.32) | 0.19 s | 2.46 MB |
 
-- **The encoder is the limit.** Rendering is under 10% of the wall time. Rendering plus `VideoFrame` creation alone takes 0.08 to 0.12 s for 150 frames (`readbackMs` in the verify files). 60 fps at the same 6 Mbps target costs 2.0 times the 30 fps time, which is linear in the frame count.
-- **The bitrate target is not what sets the file size here.** The 60 fps file is 2.46 MB at both a 6 Mbps and an 8 Mbps target (an earlier run at 8 Mbps), because the encoder undershoots on this flat scene.
+- **The encoder is the limit.** Rendering is under 10% of the wall time in every bench row. Rendering plus `VideoFrame` creation alone, without encoding, took 0.10 to 0.28 s for 150 frames across the committed verify runs (`readbackMs`), a noisy number but at most a quarter of the encode. 60 fps at the same 6 Mbps target costs 2.0 times the 30 fps time, which is linear in the frame count.
+- **The bitrate target is not what sets the file size here.** The 60 fps file is 2.46 MB at both a 6 Mbps and an 8 Mbps target ([8 Mbps runs at `8e2ad0e`](https://github.com/Pinpas/roadster-escape/blob/8e2ad0e/spikes/share/evidence/bench-runs.json)), because the encoder undershoots on this flat scene.
 - **The 2D frame copy costs about 0.1 s per 150 frames here.** The ranges overlap, so the cost is close to the noise. On a phone with a hardware encoder the copy can be a larger share. The copy protects against repeated frames on Safari 16.4 to 17.1 ([WebKit 255869](https://bugs.webkit.org/show_bug.cgi?id=255869)), so the game applies it on those versions only. The spike never ran on an affected Safari, so this protection is untested.
 - **The T3 preview browser is much slower.** It renders WebGL in software (SwiftShader) at DPR 2 and took 6.6 s for one 720x1280 clip (observed once, not recorded).
 - **Phones are not measured yet.** Phones encode H.264 in hardware, so the encode may be faster than here, but they render slower. That is a guess until the device checklist runs. The spike's result panel shows `wallMs` on the phone.
@@ -83,8 +83,9 @@ Support versions come from MDN browser-compat-data 8.1.6 ([VideoEncoder](https:/
 | Platform | Encode | Share route | Evidence |
 | --- | --- | --- | --- |
 | iOS Safari 17.5 and later, including 18 and 26 | WebCodecs H.264 | Share sheet with the MP4 | Sourced. Device test. |
-| iOS Safari 17.0 to 17.4 | WebCodecs H.264. Output is mostly key frames, so the file is larger at the same quality ([WebKit 264893](https://bugs.webkit.org/show_bug.cgi?id=264893)). | Share sheet | Sourced. |
-| iOS Safari 16.4 to 17.1 | WebCodecs H.264 with the 2D frame copy ([WebKit 255869](https://bugs.webkit.org/show_bug.cgi?id=255869)). On 16.x, some frame sizes produced no output and no error: 912x1000 failed and 1280x720 worked ([WebKit 258669](https://bugs.webkit.org/show_bug.cgi?id=258669)). 720x1280 is untested there. The watchdog catches a silent failure. | Share sheet | Sourced bugs. The 720x1280 behaviour is unknown. |
+| iOS Safari 17.2 to 17.4 | WebCodecs H.264. Output is mostly key frames, so the file is larger at the same quality ([WebKit 264893](https://bugs.webkit.org/show_bug.cgi?id=264893)). | Share sheet | Sourced. |
+| iOS Safari 17.0 to 17.1 | WebCodecs H.264 with the 2D frame copy ([WebKit 255869](https://bugs.webkit.org/show_bug.cgi?id=255869)). Output is mostly key frames (WebKit 264893). | Share sheet | Sourced. The copy is untested. |
+| iOS Safari 16.4 to 16.x | WebCodecs H.264 with the 2D frame copy. Some frame sizes produced no output and no error: 912x1000 failed and 1280x720 worked ([WebKit 258669](https://bugs.webkit.org/show_bug.cgi?id=258669)). 720x1280 is untested. The watchdog catches a silent failure. | Share sheet | Sourced bugs. The 720x1280 behaviour is unknown. |
 | iOS Safari 14.3 to 16.3 | None, no `VideoEncoder` | X post with text and link only | Sourced. |
 | X app on iOS | WebCodecs H.264 per compat data for iOS WebViews | Share sheet per compat data. Fallback hint to open in Safari. | X uses its own in-app WebView, not Safari, according to reports from late 2025 ([AppsFlyer](https://www.appsflyer.com/blog/measurement-analytics/deep-links-x-ios/)). Unverified inside X. Device test. |
 | Android Chrome | WebCodecs H.264, profile ladder High, Main, Baseline | Share sheet with the MP4 | Sourced. Device test. |
@@ -95,6 +96,8 @@ Support versions come from MDN browser-compat-data 8.1.6 ([VideoEncoder](https:/
 | Desktop Firefox | WebCodecs H.264 on macOS and Windows. On Linux only with a system FFmpeg that has libx264 ([searchfox](https://searchfox.org/mozilla-central/source/dom/media/platforms/ffmpeg/FFmpegDataEncoder.cpp)). | Download plus X post | Sourced. The profile ladder decides. |
 
 The Android X app is an Android WebView: its user agent carries the `; wv` token and `TwitterAndroid` ([user-agent log](https://roboin.io/article/en/2026/09/19/x-in-app-browser-user-agent-string/)). The same post gives `Twitter for iPhone` for iOS, but its author inferred that from logs without an iPhone. The spike detects both tokens and shows the full user agent, so device step 4 confirms or corrects the iOS token. Most players arrive from a post, so the X rows matter more than desktop Firefox.
+
+The game reads the iOS version for the copy from the `OS 17_1` part of the user agent. In-app WebViews keep that part too (inferred, and device step 4 records the full user agent).
 
 When a platform cannot encode H.264, the busted screen still offers the X post with the score text and the game link. It never offers a WebM, because X does not take one.
 
@@ -134,7 +137,7 @@ Each item has an `area:engine` issue.
 
 | Issue | Need | Why the replay needs it |
 | --- | --- | --- |
-| #10 | `RunRecord = { simVersion, seed, actions[] }`, and a headless re-sim from it | The video rebuilds the run instead of recording the screen. `simVersion` is for records that outlive their session later, such as a shared replay link or a daily-chase ghost. |
+| #10 | `RunRecord = { simVersion, seed, actions[] }`, and a headless re-sim from it that meets its budget on a desktop and on the test phone | The video rebuilds the run instead of recording the screen. `simVersion` is for records that outlive their session later, such as a shared replay link or a daily-chase ghost. |
 | #11 | `snapshot()` and `restore()`, only if the #10 re-sim misses its budget on the test phone | A shortcut for long runs. Not needed while re-sim is fast. |
 | #12 | Tick-stamped `SimEvent`s: perfect dodge, wreck, near miss, bust | The busted screen picks the best moment and places the slow motion. |
 | #13 | Render an interpolated sim state at any size into the existing renderer, as a pure function of sim time | Slow motion needs sub-tick sim times. One renderer avoids a second WebGL context. No wall clock keeps effects in step at any speed. |
@@ -144,13 +147,13 @@ Each item has an `area:engine` issue.
 
 | Risk | Likelihood | What happens | Mitigation |
 | --- | --- | --- | --- |
-| The encoder stalls or emits nothing | Sourced on Safari 16.x, unknown elsewhere | The Share button never turns on | A 5 s watchdog per frame and for the flush, and a packet count. Retry at 576x1024, then text post. |
+| The encoder stalls or emits nothing | Sourced on Safari 16.x, unknown elsewhere | The Share button never turns on | Fail when no packet arrives for 5 s, and check the packet count. Terminate the encode Worker, retry at 576x1024, then text post. |
 | X's share target on iOS or Android drops the video or the text | Unknown | The player lands in X without the clip | Device test. If X drops the text, put the score in the video's end card. |
 | X enforces its API limit of 1280x1024 on app uploads | Unknown | 720x1280 is rejected | Device step 1. If it fails, switch the default to 576x1024. |
 | Android X WebView cannot share or download | Sourced | No video from inside X on Android | **Open in Chrome** link through `intent://`. Copy-link as a fallback. |
 | A phone encodes slowly | Unknown | The Share button waits | Measure on the device first. If needed, encode at 576x1024 at 30 fps. Keep 30 fps, which X recommends. |
 | Resizing the renderer at bust time causes a stall | Possible on phones | A pause before the encode starts | The renderer and its shaders already exist. Only the drawing buffer changes size. Measure on the device. |
-| Offline render repeats frames on iOS 16.4 to 17.1 | Sourced | A frozen video | The 2D frame copy on those versions only. |
+| Offline render repeats frames on iOS 16.4 to 17.1 | Sourced | A frozen video | The 2D frame copy on those versions only, gated on the iOS version in the user agent. |
 | Render or fx code reads the wall clock | Likely without a rule | Effects freeze or jump in the replay | #13 forbids `performance.now`, `Date.now`, rAF timestamps, `THREE.Clock`, and `THREE.Timer` in `src/render/`. A lint rule can enforce it. |
 | A sim change breaks an old run record | Certain once records outlive a session | An old run cannot replay | `simVersion` in the record. In v1 a replay only happens in the session that recorded it. |
 | X rejects a silent MP4 | Low | No upload | Device step 1 with `evidence/sample-portrait-30fps.mp4`. Otherwise add a silent AAC track. |
@@ -161,7 +164,7 @@ Each item has an `area:engine` issue.
 Each step waits on Hugo. On the Tailnet routes the spike uploads every result and every MP4 to `spikes/share/out/` on the box, so the share owner can run `ffprobe` on the phone's file. On the Cloudflare preview there is no upload, so take a screenshot of the **Result** and **Capabilities** panels.
 
 1. **Desktop upload to X.** Download [`sample-portrait-30fps.mp4`](../spikes/share/evidence/sample-portrait-30fps.mp4), a silent 720x1280 H.264 High file. Attach it to a post on x.com and post it to a test account. Check that X accepts it and that it plays in the X app on both phones. This tests silent MP4s and the 1280x1024 limit.
-2. **iPhone, Safari.** Open the HTTPS spike URL from [Device tests need HTTPS](#device-tests-need-https). Write down the iOS version and `isSecureContext`. Tap **Encode** with 720x1280 and 30. Check that `selfCheck.ok` is `true`, and note `wallMs`. Encode once more with **Copy each frame** off and note `wallMs` again. Tap **Share**, pick X, and check that the composer shows the video and the text. Post it and play it in the X app.
+2. **iPhone, Safari.** Open the HTTPS spike URL from [Device tests need HTTPS](#device-tests-need-https). Write down the iOS version and `isSecureContext`. Tap **Encode** with 720x1280 and 30. Check that `selfCheck.ok` is `true`, and note `wallMs`. If `ok` is `false`, note `reason`. A reason of "timed out" means only the read-back check was slow. The encode itself already passed its packet count, so carry on. Encode once more with **Copy each frame** off and note `wallMs` again. Tap **Share**, pick X, and check that the composer shows the video and the text. Post it and play it in the X app.
 3. **Android, Chrome.** Repeat step 2. Also note `encoderConfig.codec`, which shows the H.264 profile the phone accepted.
 4. **iPhone, inside X.** Send yourself the HTTPS URL in an X DM and open it from X. Copy the full `userAgent` from the Capabilities panel. Check whether the blue banner says `x-ios`. Repeat step 2. If Share fails, tap **open in Safari** and note what happens.
 5. **Android, inside X.** Repeat step 4. The banner should say `x-android`, and Share is expected to be missing. Tap **open in Chrome** and note whether Chrome opens.
