@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Roadster Escape share spike</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <header>
+      <h1>Share spike</h1>
+      <p>Throwaway. Renders 5 s offline, encodes MP4, shares it.</p>
+    </header>
+    <main>
+      <section class="controls">
+        <fieldset>
+          <legend>Size</legend>
+          <label><input type="radio" name="size" value="portrait" checked /> 720x1280</label>
+          <label><input type="radio" name="size" value="landscape" /> 1280x720</label>
+        </fieldset>
+        <fieldset>
+          <legend>Frame rate</legend>
+          <label><input type="radio" name="fps" value="30" checked /> 30</label>
+          <label><input type="radio" name="fps" value="60" /> 60</label>
+        </fieldset>
+        <fieldset>
+          <legend>Encoder</legend>
+          <label><input type="radio" name="path" value="auto" checked /> Auto</label>
+          <label><input type="radio" name="path" value="webcodecs" /> WebCodecs</label>
+          <label><input type="radio" name="path" value="mediarecorder" /> MediaRecorder</label>
+        </fieldset>
+        <label class="inline"><input type="checkbox" name="audio" checked /> Audio track</label>
+        <div class="buttons">
+          <button id="encode">Encode</button>
+          <button id="share" disabled>Share</button>
+          <button id="download" disabled>Download</button>
+          <a id="intent" target="_blank" rel="noopener">Open X post</a>
+        </div>
+      </section>
+      <section class="stage">
+        <canvas id="scene"></canvas>
+        <video id="result" controls playsinline loop muted></video>
+      </section>
+      <section>
+        <h2>Result</h2>
+        <pre id="log"></pre>
+        <h2>Capabilities</h2>
+        <pre id="caps"></pre>
+      </section>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
