@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Roadster Escape look-dev</title>
+    <style>
+      html, body { margin: 0; height: 100%; overflow: hidden; background: #ffc89a; }
+      canvas { display: block; width: 100vw; height: 100vh; touch-action: none; }
+      #bar {
+        position: fixed; left: 50%; bottom: max(12px, env(safe-area-inset-bottom)); transform: translateX(-50%);
+        display: flex; gap: 6px; padding: 6px; border-radius: 999px;
+        background: rgba(40, 30, 60, 0.35); backdrop-filter: blur(6px);
+        font: 600 13px/1 system-ui, sans-serif;
+      }
+      #bar a {
+        color: #fff4d6; text-decoration: none; padding: 8px 12px; border-radius: 999px; white-space: nowrap;
+      }
+      #bar a[aria-current='page'] { background: #fff4d6; color: #4a4458; }
+      #debug {
+        position: fixed; top: 8px; left: 8px; padding: 6px 8px; border-radius: 6px;
+        background: rgba(20, 16, 32, 0.6); color: #eaf6ff; font: 12px/1.35 ui-monospace, monospace;
+        white-space: pre; pointer-events: none;
+      }
+      body.clean #bar { display: none; }
+    </style>
+  </head>
+  <body>
+    <nav id="bar"></nav>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
