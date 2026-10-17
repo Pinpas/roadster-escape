@@ -1,0 +1,222 @@
+[
+  {
+    "rep": 0,
+    "fps": 30,
+    "size": "portrait",
+    "wallMs": 1107,
+    "renderMs": 108,
+    "bytes": 1423972,
+    "frames": 150,
+    "videoCodec": "avc1.64001f",
+    "load1": 4.57
+  },
+  {
+    "rep": 0,
+    "fps": 30,
+    "size": "landscape",
+    "wallMs": 1090,
+    "renderMs": 72,
+    "bytes": 1576827,
+    "frames": 150,
+    "videoCodec": "avc1.64001f",
+    "load1": 4.57
+  },
+  {
+    "rep": 0,
+    "fps": 60,
+    "size": "portrait",
+    "wallMs": 2382,
+    "renderMs": 235,
+    "bytes": 2458814,
+    "frames": 300,
+    "videoCodec": "avc1.64001f",
+    "load1": 4.52
+  },
+  {
+    "rep": 0,
+    "fps": 60,
+    "size": "landscape",
+    "wallMs": 2459,
+    "renderMs": 236,
+    "bytes": 2700906,
+    "frames": 300,
+    "videoCodec": "avc1.64001f",
+    "load1": 4.52
+  },
+  {
+    "rep": 1,
+    "fps": 30,
+    "size": "portrait",
+    "wallMs": 1115,
+    "renderMs": 88,
+    "bytes": 1429147,
+    "frames": 150,
+    "videoCodec": "avc1.64001f",
+    "load1": 4.24
+  },
+  {
+    "rep": 1,
+    "fps": 30,
+    "size": "landscape",
+    "wallMs": 1327,
+    "renderMs": 150,
+    "bytes": 1575691,
+    "frames": 150,
+    "videoCodec": "avc1.64001f",
+    "load1": 4.24
+  },
+  {
+    "rep": 1,
+    "fps": 60,
+    "size": "portrait",
+    "wallMs": 2072,
+    "renderMs": 153,
+    "bytes": 2461175,
+    "frames": 300,
+    "videoCodec": "avc1.64001f",
+    "load1": 4.22
+  },
+  {
+    "rep": 1,
+    "fps": 60,
+    "size": "landscape",
+    "wallMs": 2022,
+    "renderMs": 137,
+    "bytes": 2698188,
+    "frames": 300,
+    "videoCodec": "avc1.64001f",
+    "load1": 4.22
+  },
+  {
+    "rep": 2,
+    "fps": 30,
+    "size": "portrait",
+    "wallMs": 1131,
+    "renderMs": 104,
+    "bytes": 1430260,
+    "frames": 150,
+    "videoCodec": "avc1.64001f",
+    "load1": 4.45
+  },
+  {
+    "rep": 2,
+    "fps": 30,
+    "size": "landscape",
+    "wallMs": 1315,
+    "renderMs": 121,
+    "bytes": 1574556,
+    "frames": 150,
+    "videoCodec": "avc1.64001f",
+    "load1": 4.45
+  },
+  {
+    "rep": 2,
+    "fps": 60,
+    "size": "portrait",
+    "wallMs": 2101,
+    "renderMs": 174,
+    "bytes": 2457878,
+    "frames": 300,
+    "videoCodec": "avc1.64001f",
+    "load1": 4.33
+  },
+  {
+    "rep": 2,
+    "fps": 60,
+    "size": "landscape",
+    "wallMs": 2343,
+    "renderMs": 236,
+    "bytes": 2701315,
+    "frames": 300,
+    "videoCodec": "avc1.64001f",
+    "load1": 4.33
+  },
+  {
+    "rep": 3,
+    "fps": 30,
+    "size": "portrait",
+    "wallMs": 1188,
+    "renderMs": 100,
+    "bytes": 1425900,
+    "frames": 150,
+    "videoCodec": "avc1.64001f",
+    "load1": 4.33
+  },
+  {
+    "rep": 3,
+    "fps": 30,
+    "size": "landscape",
+    "wallMs": 1305,
+    "renderMs": 126,
+    "bytes": 1575825,
+    "frames": 150,
+    "videoCodec": "avc1.64001f",
+    "load1": 4.33
+  },
+  {
+    "rep": 3,
+    "fps": 60,
+    "size": "portrait",
+    "wallMs": 2122,
+    "renderMs": 156,
+    "bytes": 2458548,
+    "frames": 300,
+    "videoCodec": "avc1.64001f",
+    "load1": 4.38
+  },
+  {
+    "rep": 3,
+    "fps": 60,
+    "size": "landscape",
+    "wallMs": 2493,
+    "renderMs": 274,
+    "bytes": 2698999,
+    "frames": 300,
+    "videoCodec": "avc1.64001f",
+    "load1": 4.38
+  },
+  {
+    "rep": 4,
+    "fps": 30,
+    "size": "portrait",
+    "wallMs": 1214,
+    "renderMs": 134,
+    "bytes": 1424949,
+    "frames": 150,
+    "videoCodec": "avc1.64001f",
+    "load1": 4.19
+  },
+  {
+    "rep": 4,
+    "fps": 30,
+    "size": "landscape",
+    "wallMs": 1051,
+    "renderMs": 80,
+    "bytes": 1577166,
+    "frames": 150,
+    "videoCodec": "avc1.64001f",
+    "load1": 4.19
+  },
+  {
+    "rep": 4,
+    "fps": 60,
+    "size": "portrait",
+    "wallMs": 2085,
+    "renderMs": 161,
+    "bytes": 2460355,
+    "frames": 300,
+    "videoCodec": "avc1.64001f",
+    "load1": 4.1
+  },
+  {
+    "rep": 4,
+    "fps": 60,
+    "size": "landscape",
+    "wallMs": 2238,
+    "renderMs": 198,
+    "bytes": 2696096,
+    "frames": 300,
+    "videoCodec": "avc1.64001f",
+    "load1": 4.1
+  }
+]
