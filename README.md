@@ -4,11 +4,11 @@ A flying roadster, a Texas highway, and every cop in the state. Barrel-roll out 
 
 Roadster Escape runs in any browser on a phone, tablet, or computer. No install, no account.
 
-> Status: in development. The first playable build is not live yet.
+> Status: version 1 is playable: title, chase, bust, and retry. Replay, sharing, sound, and the daily chase come later.
 
 ## Play
 
-The game will be live at a public URL once phase 3 of the [roadmap](docs/ROADMAP.md) lands.
+The game goes live on Cloudflare Workers once Hugo connects the repository (see Deploy). Tap or press Space to start. Swerve, hop over traffic, and barrel-roll away from PIT lunges. Near misses refill your air and build a combo.
 
 | Action | Touch | Keyboard |
 | --- | --- | --- |

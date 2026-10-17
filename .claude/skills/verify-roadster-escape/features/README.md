@@ -28,6 +28,7 @@ Each feature file starts with an H1 title and one paragraph on the player-visibl
 ## Features
 
 - [Highway scene](./highway-scene.md) covers the look-dev highway, the two quality tiers, viewport fit, and pixel ratio.
+- [Chase run](./chase-run.md) covers a full run from title to chase to BUSTED to retry, and the stored best score.
 - [Render flags](./render-flags.md) covers `?fps`, `?still`, `?dpr`, and the pause while hidden.
 - [Production build](./production-build.md) covers the built game on the Cloudflare Workers runtime and its cache headers.
 - [Version label and debug overlay](./version-and-debug.md) covers the corner version label and the `?debug` overlay.
