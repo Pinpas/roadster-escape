@@ -8,6 +8,7 @@ This spike proves the phase 6 video path before the game exists. It renders a 5 
 npm ci
 npm run dev          # http://hugo-agentbox-macbookpro:5104 (plain http, no WebCodecs or Web Share on phones)
 npm run dev:https    # https://hugo-agentbox-macbookpro:5105 (self-signed certificate)
+SPIKE_CERT=host.crt SPIKE_KEY=host.key npm run dev:https   # the same with a `tailscale cert` pair that phones trust
 ```
 
 Every encode and every capability probe is uploaded to `out/` on the dev server, so results from a phone arrive on the box.
@@ -15,11 +16,11 @@ Every encode and every capability probe is uploaded to `out/` on the dev server,
 ## Measure
 
 ```bash
-npm run verify       # headless Chromium: encode both sizes, click Share, ffprobe and decode each MP4
+npm run verify       # headless Chromium: encode both sizes, click Share, ffprobe, decode and PSNR each MP4 (ENCODER, COPY, FPS, BITRATE)
 node scripts/bench.mjs   # 5 alternating runs: 30 fps with and without the 2D frame copy, and 60 fps
 npm run size         # minified and gzipped size of the muxer options
 ```
 
 Run each one through `~/projects/agentbox/scripts/heavy` with a `timeout`. Headless Chromium needs `--use-angle=vulkan` for WebGL on the real GPU; `scripts/gl-probe.mjs` lists the flag sets that were tried.
 
-`evidence/` holds the ffprobe output, decoded frames, preview screenshots, benchmark runs, and one sample MP4.
+`evidence/` holds the unmodified output of `verify`, `bench` and `size`, the ffprobe output, decoded frames, preview screenshots, and one sample MP4.
