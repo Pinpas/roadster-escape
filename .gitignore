@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.vite/
+coverage/
+playwright-report/
+test-results/
+.audit/
+*.blend1
+.env
+.env.*
+.DS_Store
