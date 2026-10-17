@@ -48,8 +48,33 @@ const RECORDER_MIMES = [
   'video/webm',
 ];
 
-export async function webCodecsAvailable(size: FrameSize): Promise<boolean> {
-  return typeof VideoEncoder !== 'undefined' && (await canEncodeVideo('avc', size));
+// mediabunny asks only for High profile. Android requires only Baseline from hardware
+// encoders, so walk down the profiles before giving up on video.
+const AVC_PROFILES = { high: '64', main: '4d', baseline: '42' } as const;
+
+// A stalled encoder never resolves add() or finalize(); give up instead of leaving
+// the Share button off forever.
+const STALL_MS = 5000;
+
+export async function pickAvcCodec(size: FrameSize, fps: number): Promise<string | null> {
+  if (typeof VideoEncoder === 'undefined') return null;
+  const level = fps > 30 ? '20' : '1f';
+  for (const profile of Object.values(AVC_PROFILES)) {
+    const fullCodecString = `avc1.${profile}00${level}`;
+    if (await canEncodeVideo('avc', { ...size, frameRate: fps, fullCodecString })) return fullCodecString;
+  }
+  return null;
+}
+
+function withStallTimeout<T>(p: Promise<T>, output: Output, what: string): Promise<T> {
+  let timer = 0;
+  const stall = new Promise<never>((_, reject) => {
+    timer = window.setTimeout(() => {
+      void output.cancel();
+      reject(new Error(`EncoderStalled: ${what} took over ${STALL_MS} ms`));
+    }, STALL_MS);
+  });
+  return Promise.race([p, stall]).finally(() => clearTimeout(timer));
 }
 
 export function recorderMime(): string | null {
@@ -57,8 +82,8 @@ export function recorderMime(): string | null {
   return RECORDER_MIMES.find((m) => MediaRecorder.isTypeSupported(m)) ?? null;
 }
 
-export async function choosePath(size: FrameSize): Promise<EncodePath | null> {
-  if (await webCodecsAvailable(size)) return 'webcodecs';
+export async function choosePath(size: FrameSize, fps: number): Promise<EncodePath | null> {
+  if (await pickAvcCodec(size, fps)) return 'webcodecs';
   return recorderMime() ? 'mediarecorder' : null;
 }
 
@@ -68,12 +93,15 @@ export async function encode(path: EncodePath, job: EncodeJob, renderer: ReplayR
 
 async function encodeWebCodecs(job: EncodeJob, renderer: ReplayRenderer): Promise<Encoded> {
   const start = performance.now();
+  const fullCodecString = await pickAvcCodec(job.size, job.fps);
+  if (!fullCodecString) throw new Error('No H.264 profile encodes this size');
   renderer.setSize(job.size);
   const target = new BufferTarget();
   const output = new Output({ format: new Mp4OutputFormat({ fastStart: 'in-memory' }), target });
 
   let videoCodec = 'avc';
   let encoderConfig: VideoEncoderConfig | null = null;
+  let packets = 0;
   const copy = job.copyFrame ? Object.assign(document.createElement('canvas'), job.size) : null;
   const copyCtx = copy?.getContext('2d') ?? null;
   const video = new CanvasSource(copy ?? renderer.canvas, {
@@ -81,6 +109,8 @@ async function encodeWebCodecs(job: EncodeJob, renderer: ReplayRenderer): Promis
     quality: new Quality({ bitrate: job.videoBitrate }),
     keyFrameInterval: 1,
     latencyMode: 'quality',
+    fullCodecString,
+    onEncodedPacket: () => packets++,
     onEncoderConfig: (c) => {
       videoCodec = c.codec;
       encoderConfig = c;
@@ -108,10 +138,11 @@ async function encodeWebCodecs(job: EncodeJob, renderer: ReplayRenderer): Promis
     renderer.renderAt(t);
     copyCtx?.drawImage(renderer.canvas, 0, 0);
     renderMs += performance.now() - r0;
-    await video.add(t, 1 / job.fps);
+    await withStallTimeout(video.add(t, 1 / job.fps), output, `frame ${i}`);
   }
   if (audio) await audio.add(await renderReplayAudio(job.seconds));
-  await output.finalize();
+  await withStallTimeout(output.finalize(), output, 'finalize');
+  if (packets !== frames) throw new Error(`EncoderDroppedFrames: ${packets} of ${frames} frames encoded`);
 
   const blob = new Blob([target.buffer!], { type: 'video/mp4' });
   return {

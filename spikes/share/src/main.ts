@@ -19,8 +19,12 @@ const inApp = inAppBrowser();
 const escape = escapeUrl(inApp);
 if (escape) {
   const banner = $<HTMLParagraphElement>('#escape');
+  const link = Object.assign(document.createElement('a'), {
+    href: escape,
+    textContent: `open in ${inApp === 'x-android' ? 'Chrome' : 'Safari'}`,
+  });
+  banner.append(`Inside the X app (${inApp}). Try here first, then `, link, '.');
   banner.hidden = false;
-  banner.innerHTML = `Inside the X app (${inApp}). Try here first, then <a href="${escape}">open in ${inApp === 'x-android' ? 'Chrome' : 'Safari'}</a>.`;
 }
 
 const renderer = createReplayRenderer(canvas);
@@ -38,6 +42,11 @@ const radio = (name: string) => document.querySelector<HTMLInputElement>(`input[
 const params = new URLSearchParams(location.search);
 
 let clip: File | null = null;
+
+function withTimeout<T>(p: Promise<T>, ms: number) {
+  const timeout = new Promise<{ ok: false; reason: string }>((resolve) => setTimeout(() => resolve({ ok: false, reason: `timed out after ${ms} ms` }), ms));
+  return Promise.race([p.catch((e: Error) => ({ ok: false as const, reason: `${e.name}: ${e.message}` })), timeout]);
+}
 
 function summary(sizeName: SizeName, job: EncodeJob, r: Encoded, check: unknown) {
   return {
@@ -64,21 +73,21 @@ const copyParam = params.get('copy');
 
 async function run(sizeName: SizeName, fps: 30 | 60, pathChoice: EncodePath | 'auto', audio: boolean, copyFrame: boolean) {
   const job: EncodeJob = { size: SIZES[sizeName], fps, seconds: 5, audio, videoBitrate, copyFrame };
-  const path = pathChoice === 'auto' ? await choosePath(job.size) : pathChoice;
+  const path = pathChoice === 'auto' ? await choosePath(job.size, fps) : pathChoice;
   if (!path) throw new Error('No encoder path on this browser');
   log.textContent = `Encoding ${sizeName} ${fps} fps via ${path}...`;
   const r = await encode(path, job, renderer);
   const ext = r.mime.startsWith('video/mp4') ? 'mp4' : 'webm';
   clip = new File([r.blob], `roadster-escape-replay.${ext}`, { type: r.mime.split(';')[0] });
   video.src = URL.createObjectURL(clip);
-  log.textContent = 'Reading the MP4 back...';
-  const check = r.path === 'webcodecs' ? await selfCheck(r.blob, r.frames).catch((e: Error) => ({ ok: false, reason: `${e.name}: ${e.message}` })) : null;
+  shareBtn.disabled = downloadBtn.disabled = false;
+  log.textContent = `Encoded in ${Math.round(r.wallMs)} ms. Reading the MP4 back...`;
+  const check = r.path === 'webcodecs' ? await withTimeout(selfCheck(r.blob, r.frames), 10_000) : null;
   const s = summary(sizeName, job, r, check);
   log.textContent = JSON.stringify(s, null, 2);
   const base = `${stamp()}-${sizeName}-${fps}-${path}-${videoBitrate / 1e6}M`;
   await upload(`${base}.${ext}`, r.blob);
   await upload(`${base}.json`, new Blob([JSON.stringify(s, null, 2)]));
-  shareBtn.disabled = downloadBtn.disabled = false;
   return s;
 }
 

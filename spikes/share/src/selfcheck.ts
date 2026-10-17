@@ -1,4 +1,4 @@
-import { ALL_FORMATS, BlobSource, CanvasSink, Input } from 'mediabunny';
+import { BlobSource, CanvasSink, Input, MP4 } from 'mediabunny';
 
 const PROBE_TIMES = [0.5, 1.5, 2.5, 3.5, 4.5];
 
@@ -11,7 +11,7 @@ function fnv1a(bytes: Uint8ClampedArray): string {
 // Reads the MP4 back on the device itself, so a phone run proves frame count and
 // catches the Safari 16.4 bug where every encoded frame repeats the same image.
 export async function selfCheck(blob: Blob, expectedFrames: number) {
-  const input = new Input({ source: new BlobSource(blob), formats: ALL_FORMATS });
+  const input = new Input({ source: new BlobSource(blob), formats: [MP4] });
   const track = await input.getPrimaryVideoTrack();
   if (!track) return { ok: false, reason: 'no video track' };
   const { packetCount } = await track.computePacketStats();

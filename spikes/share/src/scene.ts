@@ -18,7 +18,7 @@ export type ReplayRenderer = {
 };
 
 export function createReplayRenderer(canvas: HTMLCanvasElement): ReplayRenderer {
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
   renderer.setPixelRatio(1);
 
   const scene = new THREE.Scene();
