@@ -20,7 +20,7 @@ Preconditions:
 
 - A dev server reports `doctor: OK`.
 
-- **Scripted.** Run `~/projects/agentbox/scripts/heavy timeout 180s npm run test:e2e`. `e2e/version.spec.ts` checks the label text against `package.json` and reads the overlay at `?debug&fps=10&dpr=1`. The render rate must sit between 6 and 11 fps, and the tick must pass 60.
+- **Scripted.** Run `~/projects/agentbox/scripts/heavy timeout 180s npm run test:e2e`. `e2e/version.spec.ts` checks the label text against `package.json` and reads the overlay at `?debug&fps=10&dpr=0.25&tier=low` after a 3-second wait. The render rate must sit between 6 and 11 fps, and the tick must pass 60. The low tier at a tiny pixel ratio keeps the software renderer under the cap, so a slower reading at `dpr=1` is not a regression.
 - **Visual.** Open a blank tab, resize to 390x844, and navigate to `/?debug&still&dpr=1`. `preview_snapshot` with `save: true` and `includeImage: true` shows the overlay top left and the label bottom right, both clear of the notch areas. Close the tab.
 
 ## Gotchas

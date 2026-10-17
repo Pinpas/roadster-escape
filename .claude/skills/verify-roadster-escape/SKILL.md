@@ -94,7 +94,7 @@ Size the tab before the page loads, because `?still` draws only once:
 
 ## Evidence
 
-- Playwright writes `.verify/evidence/empty-scene-desktop.png` and `.verify/evidence/empty-scene-phone.png`. On failure, Playwright keeps a trace and a screenshot under `e2e/test-results/`. Open the trace with `npx playwright show-trace <path>/trace.zip`.
+- Playwright writes `.verify/evidence/highway-scene-desktop.png` and `.verify/evidence/highway-scene-phone.png`. On failure, Playwright keeps a trace and a screenshot under `e2e/test-results/`. Open the trace with `npx playwright show-trace <path>/trace.zip`.
 - T3 snapshots land at the `screenshotPath` each `preview_snapshot` returns, under `/home/hugo/.t3/userdata/browser-artifacts/`.
 - For a PR, copy the 1280x720 and 390x844 shots to `docs/media/<phase>/`, keep each file small, and embed them in the PR body.
 - Report the console result (the `consoleEntries` list or the doctor's error count), the evaluate output, and the commands with their pass or fail lines. Proof drives the real page through its URL. Do not set game state from the console.

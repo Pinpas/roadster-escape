@@ -21,7 +21,7 @@ Preconditions:
 - A dev server reports `doctor: OK`.
 
 - **Still frame.** Run `~/projects/agentbox/scripts/heavy timeout 180s npm run test:e2e`. The spec `?still&dpr=1 draws one frame at pixel ratio 1 and stops` passes in both projects. It takes two screenshots 400 ms apart and requires them to match.
-- **Capped animation.** In the same run, the spec `the scene animates at a capped pixel ratio with ?fps=10` passes. Its two screenshots differ, so the box moves at 10 fps.
+- **Capped animation.** In the same run, the spec `the scene animates at a capped pixel ratio with ?fps=10` passes. Its two screenshots differ, so the highway scene animates at 10 fps.
 - **Parsing and pacing.** `npm test` runs `src/render/flags.test.ts` (defaults, all flags, malformed values, the `?dpr` cap of 4), and `src/render/loop.test.ts` (render counts under each cap on 30 to 144 Hz displays, one render with `?still`, no burst after a stall).
 - **Pause while hidden.** `src/render/loop.test.ts` drives the loop with a fake frame scheduler. It checks that no frame is requested while hidden, that hiding cancels the pending frame, and that the first frame after a hidden minute runs no catch-up steps. A browser cannot show this here, because the T3 preview and headless Playwright both report the page as visible.
 

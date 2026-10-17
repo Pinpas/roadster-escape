@@ -27,7 +27,7 @@ Each feature file starts with an H1 title and one paragraph on the player-visibl
 
 ## Features
 
-- [Empty scene](./empty-scene.md) covers the sky, ground, placeholder box, viewport fit, and pixel ratio.
+- [Highway scene](./highway-scene.md) covers the look-dev highway, the two quality tiers, viewport fit, and pixel ratio.
 - [Render flags](./render-flags.md) covers `?fps`, `?still`, `?dpr`, and the pause while hidden.
 - [Production build](./production-build.md) covers the built game on the Cloudflare Workers runtime and its cache headers.
 - [Version label and debug overlay](./version-and-debug.md) covers the corner version label and the `?debug` overlay.

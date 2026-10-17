@@ -2,8 +2,8 @@ import { expect, test, type Page } from '@playwright/test';
 
 interface Sample {
   readonly sky: readonly number[];
-  readonly ground: readonly number[];
-  readonly redPixels: number;
+  readonly road: readonly number[];
+  readonly roadsterPixels: number;
   readonly centreHash: number;
 }
 
@@ -23,16 +23,17 @@ const sampleScreen = async (page: Page): Promise<Sample> => {
     const pixel = (x: number, y: number): number[] => [
       ...ctx.getImageData(Math.floor(x * copy.width), Math.floor(y * copy.height), 1, 1).data,
     ];
-    let redPixels = 0;
+    let roadsterPixels = 0;
     let centreHash = 0;
     for (let gy = 0; gy < 40; gy++) {
       for (let gx = 0; gx < 40; gx++) {
-        const [r = 0, g = 0, b = 0] = pixel(0.2 + gx * 0.015, 0.25 + gy * 0.0125);
-        if (r > 90 && g < 60 && b < 60) redPixels++;
+        const [r = 0, g = 0, b = 0] = pixel(0.3 + gx * 0.01, 0.55 + gy * 0.00875);
+        // The graded silver body is bright and cool; the violet road is dark, the lit sand low in blue.
+        if (0.2126 * r + 0.7152 * g + 0.0722 * b > 140 && b > 130) roadsterPixels++;
         centreHash = (centreHash * 31 + r + g * 7 + b * 13) >>> 0;
       }
     }
-    return { sky: pixel(0.5, 0.02), ground: pixel(0.5, 0.98), redPixels, centreHash };
+    return { sky: pixel(0.5, 0.04), road: pixel(0.5, 0.97), roadsterPixels, centreHash };
   }, png);
 };
 
@@ -68,23 +69,33 @@ const firstFrame = (page: Page, pixelRatio?: number) =>
     );
   }, pixelRatio);
 
+const luma = ([r = 0, g = 0, b = 0]: readonly number[]): number =>
+  0.2126 * r + 0.7152 * g + 0.0722 * b;
+
 const expectScene = (sample: Sample): void => {
-  const [skyR = 0, , skyB = 0] = sample.sky;
-  expect(skyB, 'top of the frame is blue sky').toBeGreaterThan(skyR);
-  const [groundR = 0, , groundB = 0] = sample.ground;
-  expect(groundR, 'bottom of the frame is sand').toBeGreaterThan(groundB);
-  expect(sample.redPixels, 'the red placeholder box is in view').toBeGreaterThan(20);
+  expect(luma(sample.sky), 'the sunset sky is brighter than the road').toBeGreaterThan(
+    luma(sample.road) + 40,
+  );
+  const [, roadG = 0, roadB = 0] = sample.road;
+  expect(roadB, 'bottom of the frame is violet asphalt, not sand').toBeGreaterThan(roadG);
+  expect(sample.roadsterPixels, 'the silver Roadster is in view').toBeGreaterThan(40);
 };
 
 test('the scene animates at a capped pixel ratio with ?fps=10', async ({ page }, testInfo) => {
+  // At pixel ratio 2 the default tier's HDR target and post pass take about a second per frame
+  // on the CPU renderer of the build box, and longer under load, so allow minutes, not seconds.
+  test.setTimeout(120_000);
   const errors = collectErrors(page);
   await page.goto('/?fps=10');
   await firstFrame(page);
   const first = await sampleScreen(page);
   await expect
-    .poll(async () => (await sampleScreen(page)).centreHash, { message: 'the box moves' })
+    .poll(async () => (await sampleScreen(page)).centreHash, {
+      message: 'the scene moves',
+      timeout: 40_000,
+    })
     .not.toBe(first.centreHash);
-  await page.screenshot({ path: `.verify/evidence/empty-scene-${testInfo.project.name}.png` });
+  await page.screenshot({ path: `.verify/evidence/highway-scene-${testInfo.project.name}.png` });
 
   const sizes = await canvasSizes(page);
   const pixelRatio = Math.min(sizes.devicePixelRatio, 2);
@@ -113,5 +124,25 @@ test('?still&dpr=1 draws one frame at pixel ratio 1 and stops', async ({ page })
   expect(sizes.buffer, 'canvas buffer is at pixel ratio 1').toEqual(sizes.css);
   expectScene(first);
   expect(second.centreHash, 'nothing moves after the single frame').toBe(first.centreHash);
+  expect(errors, 'console errors').toEqual([]);
+});
+
+test('?tier=low renders the same scene in one shader, inside the triangle budget', async ({
+  page,
+}) => {
+  const errors = collectErrors(page);
+  await page.goto('/?still&dpr=1&tier=low&debug');
+  await firstFrame(page, 1);
+  const view = await page.evaluate(() => {
+    const debug = (
+      window as unknown as {
+        __roadster: { tier: { tier: string }; stats(): { triangles: number } };
+      }
+    ).__roadster;
+    return { tier: debug.tier.tier, triangles: debug.stats().triangles };
+  });
+  expect(view.tier, 'the low tier was chosen').toBe('low');
+  expect(view.triangles, 'triangles on screen, shadow pass included').toBeLessThan(60_000);
+  expectScene(await sampleScreen(page));
   expect(errors, 'console errors').toEqual([]);
 });

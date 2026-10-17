@@ -21,7 +21,7 @@ Preconditions:
 - `scripts/dev-server.sh start-cf` reports `doctor: OK` on port 5106. It builds `dist/` first.
 
 - **Headers.** Run `curl -sI http://hugo-agentbox-macbookpro:5106/` and `curl -sI http://hugo-agentbox-macbookpro:5106/assets/<file>.js` with a file name from `dist/assets/`. The first shows `Cache-Control: public, max-age=0, must-revalidate`. The second shows `Cache-Control: public, max-age=31536000, immutable`. `/_headers` itself returns 404.
-- **Render.** Drive the Empty scene recipe against `http://hugo-agentbox-macbookpro:5106/?still&dpr=1` at both sizes. Every network entry returns 200 and the console holds no error.
+- **Render.** Drive the Highway scene recipe against `http://hugo-agentbox-macbookpro:5106/?still&dpr=1` at both sizes. Every network entry returns 200 and the console holds no error.
 - **Sub-path.** Run `~/projects/agentbox/scripts/heavy npm run build -- --base=/sub/`, then `grep -o 'src="[^"]*"' dist/index.html`. The script path starts with `/sub/assets/`. Rebuild without `--base` afterwards.
 - **Cleanup.** Run `scripts/dev-server.sh stop 5106` and close the tab.
 
