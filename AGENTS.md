@@ -21,5 +21,6 @@ If code and docs disagree, fix whichever is wrong in the same pull request.
 
 - Start every engineering task with `/t3-pstack:poteto-mode`.
 - Work on a branch and open a pull request. Never push to `main`.
+- Write every commit message and pull request title as Conventional Commits, `type(scope): subject`, with a scope from `engine`, `art`, `share`, `sim`, `render`, `ui`, `ci`, `docs`, or `deps`. Pull requests land with rebase merges, so fold fixes into the commit they fix with `git commit --fixup` and `git rebase --autosquash` before you report a pull request ready.
 - Prove visual work with screenshots or a recording from the running game, at a desktop size and at a phone size.
 - Keep generated `.glb` files committed next to the Blender script that makes them.
