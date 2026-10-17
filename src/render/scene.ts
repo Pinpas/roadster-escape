@@ -1,5 +1,6 @@
 import {
   Color,
+  Group,
   DirectionalLight,
   HemisphereLight,
   MathUtils,
@@ -9,6 +10,8 @@ import {
   Vector3,
   WebGLRenderer,
 } from 'three';
+import type { World } from '../sim/world';
+import { createChase } from './chase';
 import { SUN_DIR } from './look/haze';
 import { highMaterials, highToon } from './look/materials-high';
 import { lowMaterials, lowToon } from './look/materials-low';
@@ -17,7 +20,8 @@ import { createSky } from './look/sky';
 import { tune } from './look/tune';
 import { palette } from './palette';
 import { probeCaps, resolveTier, type GpuCaps, type Tier, type TierChoice } from './quality';
-import { chaseCamera, createHighway } from './world/highway';
+import { roadsterPose } from './pose';
+import { chaseCamera, createHighway, HIGHWAY_SPEED } from './world/highway';
 
 const MAX_PIXEL_RATIO = 2;
 const POWER = 'high-performance';
@@ -33,8 +37,8 @@ export interface FrameStats {
 
 export interface View {
   readonly tier: TierChoice;
-  /** Draws one frame; `simSeconds` is the interpolated simulation time. */
-  render(simSeconds: number): void;
+  /** Draws the world after the latest fixed step; `simSeconds` drives the sky and camera sway. */
+  render(world: World, simSeconds: number): void;
   stats(): FrameStats;
 }
 
@@ -90,6 +94,11 @@ export function createView(
   const material = high ? highMaterials() : lowMaterials();
   for (const part of highway.parts) part.mesh.material = material(part);
   scene.add(highway.root);
+  // The sim drives the Roadster, the cops, and the traffic, so the look-dev cars stay hidden.
+  for (const car of highway.attract) car.visible = false;
+  const chaseRoot = new Group();
+  scene.add(chaseRoot);
+  const chase = createChase(chaseRoot);
 
   const sky = createSky(
     high
@@ -135,9 +144,15 @@ export function createView(
 
   return {
     tier,
-    render(simSeconds) {
+    render(world, simSeconds) {
       fitToCanvas();
-      highway.update(simSeconds);
+      highway.update(world.distance / HIGHWAY_SPEED);
+      const pose = roadsterPose(world.roadster);
+      highway.hero.set(pose.x, pose.y, -world.distance);
+      highway.roadster.rotation.set(0, 0, pose.roll);
+      highway.focus.set(pose.x * 0.5, 0, -world.distance - 14);
+      chaseRoot.position.z = -world.distance;
+      chase.update(world);
       chaseCamera(highway.hero, simSeconds, portrait, rig);
       camera.position.copy(rig.position);
       camera.lookAt(rig.target);

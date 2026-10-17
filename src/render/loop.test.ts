@@ -7,6 +7,7 @@ const fakeBrowser = (search = '') => {
   let nextHandle = 1;
   let hidden = false;
   const renders: LoopFrame[] = [];
+  let steps = 0;
   const scheduler: FrameScheduler = {
     request(callback) {
       if (pending) throw new Error('the loop requested a second frame before the first ran');
@@ -21,11 +22,15 @@ const fakeBrowser = (search = '') => {
   const loop = createLoop({
     flags: parseRenderFlags(search),
     scheduler,
+    step: () => {
+      steps++;
+    },
     render: (frame) => renders.push(frame),
   });
   return {
     loop,
     renders,
+    steps: () => steps,
     hasPendingFrame: () => pending !== undefined,
     setHidden(value: boolean) {
       hidden = value;
@@ -58,6 +63,7 @@ describe('createLoop', () => {
     browser.runDisplay(60, 0, 2);
     expect(browser.renders).toHaveLength(20);
     expect(browser.renders.at(-1)?.tick).toBeGreaterThanOrEqual(110);
+    expect(browser.steps(), 'the sim still steps 60 times a second').toBe(119);
   });
 
   it.each([

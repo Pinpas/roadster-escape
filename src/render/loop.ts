@@ -24,9 +24,11 @@ export interface Loop {
 export function createLoop(options: {
   readonly flags: RenderFlags;
   readonly scheduler: FrameScheduler;
+  /** Runs one fixed 60 Hz simulation step; called before each render as often as time allows. */
+  readonly step: () => void;
   readonly render: (frame: LoopFrame) => void;
 }): Loop {
-  const { flags, scheduler, render } = options;
+  const { flags, scheduler, step, render } = options;
   const renderGapMs = flags.fps === undefined ? 0 : 1000 / flags.fps;
   let accumulator = 0;
   let tick = 0;
@@ -43,6 +45,7 @@ export function createLoop(options: {
     );
     lastFrameMs = nowMs;
     accumulator = advance.accumulator;
+    for (let index = 0; index < advance.steps; index++) step();
     tick += advance.steps;
 
     // Renders keep a steady cadence; after a stall the cadence restarts instead of bursting.
