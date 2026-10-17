@@ -1,5 +1,6 @@
 import { canEncodeAudio, canEncodeVideo, getEncodableVideoCodecs } from 'mediabunny';
 import { SIZES } from './scene';
+import { inAppBrowser } from './share';
 
 const AVC_CONFIGS = ['avc1.42E01F', 'avc1.4D0028', 'avc1.640028', 'avc1.42001F'];
 const RECORDER_TYPES = [
@@ -39,6 +40,8 @@ export async function probeCapabilities() {
   return {
     userAgent: navigator.userAgent,
     isSecureContext: window.isSecureContext,
+    inAppBrowser: inAppBrowser(),
+    coarsePointer: matchMedia('(pointer: coarse)').matches,
     hardwareConcurrency: navigator.hardwareConcurrency,
     webgl: webglRenderer(),
     VideoEncoder: typeof VideoEncoder !== 'undefined',

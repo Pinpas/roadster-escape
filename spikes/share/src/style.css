@@ -14,3 +14,5 @@ button:disabled { background: #4a4458; color: #999; }
 .stage { display: flex; gap: 8px; align-items: flex-start; }
 .stage canvas, .stage video { max-width: calc(50% - 4px); max-height: 60vh; background: #000; border-radius: 6px; }
 pre { white-space: pre-wrap; word-break: break-all; background: #26222f; padding: 8px; border-radius: 6px; font-size: 12px; }
+#escape { background: #2f6bff; padding: 10px; border-radius: 8px; }
+#escape a { color: #fff; font-weight: 600; }

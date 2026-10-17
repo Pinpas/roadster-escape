@@ -1,7 +1,8 @@
 import { probeCapabilities } from './caps';
 import { choosePath, encode, type EncodePath, type Encoded, type EncodeJob } from './encode';
 import { createReplayRenderer, SIZES, type SizeName } from './scene';
-import { download, shareClip, shareRoute, xIntentUrl } from './share';
+import { selfCheck } from './selfcheck';
+import { download, escapeUrl, inAppBrowser, shareClip, shareRoute, xIntentUrl } from './share';
 
 const $ = <T extends HTMLElement>(sel: string) => document.querySelector<T>(sel)!;
 const canvas = $<HTMLCanvasElement>('#scene');
@@ -13,6 +14,14 @@ const shareBtn = $<HTMLButtonElement>('#share');
 const downloadBtn = $<HTMLButtonElement>('#download');
 const intent = $<HTMLAnchorElement>('#intent');
 intent.href = xIntentUrl();
+
+const inApp = inAppBrowser();
+const escape = escapeUrl(inApp);
+if (escape) {
+  const banner = $<HTMLParagraphElement>('#escape');
+  banner.hidden = false;
+  banner.innerHTML = `Inside the X app (${inApp}). Try here first, then <a href="${escape}">open in ${inApp === 'x-android' ? 'Chrome' : 'Safari'}</a>.`;
+}
 
 const renderer = createReplayRenderer(canvas);
 renderer.setSize(SIZES.portrait);
@@ -30,9 +39,10 @@ const params = new URLSearchParams(location.search);
 
 let clip: File | null = null;
 
-function summary(sizeName: SizeName, r: Encoded) {
+function summary(sizeName: SizeName, job: EncodeJob, r: Encoded, check: unknown) {
   return {
     size: sizeName,
+    copyFrame: job.copyFrame,
     path: r.path,
     videoBitrate,
     mime: r.mime,
@@ -45,13 +55,15 @@ function summary(sizeName: SizeName, r: Encoded) {
     bytes: r.blob.size,
     xSafe: r.xSafe,
     shareRoute: clip ? shareRoute(clip) : null,
+    selfCheck: check,
   };
 }
 
 const videoBitrate = Number(params.get('bitrate') ?? 6_000_000);
+const copyParam = params.get('copy');
 
-async function run(sizeName: SizeName, fps: 30 | 60, pathChoice: EncodePath | 'auto', audio: boolean) {
-  const job: EncodeJob = { size: SIZES[sizeName], fps, seconds: 5, audio, videoBitrate };
+async function run(sizeName: SizeName, fps: 30 | 60, pathChoice: EncodePath | 'auto', audio: boolean, copyFrame: boolean) {
+  const job: EncodeJob = { size: SIZES[sizeName], fps, seconds: 5, audio, videoBitrate, copyFrame };
   const path = pathChoice === 'auto' ? await choosePath(job.size) : pathChoice;
   if (!path) throw new Error('No encoder path on this browser');
   log.textContent = `Encoding ${sizeName} ${fps} fps via ${path}...`;
@@ -59,7 +71,9 @@ async function run(sizeName: SizeName, fps: 30 | 60, pathChoice: EncodePath | 'a
   const ext = r.mime.startsWith('video/mp4') ? 'mp4' : 'webm';
   clip = new File([r.blob], `roadster-escape-replay.${ext}`, { type: r.mime.split(';')[0] });
   video.src = URL.createObjectURL(clip);
-  const s = summary(sizeName, r);
+  log.textContent = 'Reading the MP4 back...';
+  const check = r.path === 'webcodecs' ? await selfCheck(r.blob, r.frames).catch((e: Error) => ({ ok: false, reason: `${e.name}: ${e.message}` })) : null;
+  const s = summary(sizeName, job, r, check);
   log.textContent = JSON.stringify(s, null, 2);
   const base = `${stamp()}-${sizeName}-${fps}-${path}-${videoBitrate / 1e6}M`;
   await upload(`${base}.${ext}`, r.blob);
@@ -71,7 +85,13 @@ async function run(sizeName: SizeName, fps: 30 | 60, pathChoice: EncodePath | 'a
 encodeBtn.onclick = async () => {
   encodeBtn.disabled = true;
   try {
-    await run(radio('size') as SizeName, Number(radio('fps')) as 30 | 60, radio('path') as EncodePath | 'auto', $<HTMLInputElement>('input[name=audio]').checked);
+    await run(
+      radio('size') as SizeName,
+      Number(radio('fps')) as 30 | 60,
+      radio('path') as EncodePath | 'auto',
+      $<HTMLInputElement>('input[name=audio]').checked,
+      $<HTMLInputElement>('input[name=copy]').checked,
+    );
   } catch (e) {
     log.textContent = `Encode failed: ${(e as Error).name}: ${(e as Error).message}`;
   } finally {
@@ -119,10 +139,11 @@ if (params.has('auto')) {
   window.__spike = { done: false, results: [] };
   const fps = Number(params.get('fps') ?? 30) as 30 | 60;
   const path = (params.get('path') ?? 'auto') as EncodePath | 'auto';
-  const audio = params.get('audio') !== '0';
+  const audio = params.get('audio') === '1';
+  const copyFrame = copyParam !== '0';
   (async () => {
     await capsReady;
-    for (const size of ['portrait', 'landscape'] as const) window.__spike!.results.push(await run(size, fps, path, audio));
+    for (const size of ['portrait', 'landscape'] as const) window.__spike!.results.push(await run(size, fps, path, audio, copyFrame));
   })()
     .catch((e: Error) => (window.__spike!.error = `${e.name}: ${e.message}`))
     .finally(() => (window.__spike!.done = true));

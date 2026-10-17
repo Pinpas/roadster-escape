@@ -19,6 +19,9 @@ export type EncodeJob = {
   seconds: number;
   audio: boolean;
   videoBitrate: number;
+  // Safari 16.4 to about 17.1 read the composited WebGL frame instead of the drawing
+  // buffer, so offline frames repeat. A 2D copy hands the encoder the real pixels.
+  copyFrame: boolean;
 };
 
 export type Encoded = {
@@ -71,7 +74,9 @@ async function encodeWebCodecs(job: EncodeJob, renderer: ReplayRenderer): Promis
 
   let videoCodec = 'avc';
   let encoderConfig: VideoEncoderConfig | null = null;
-  const video = new CanvasSource(renderer.canvas, {
+  const copy = job.copyFrame ? Object.assign(document.createElement('canvas'), job.size) : null;
+  const copyCtx = copy?.getContext('2d') ?? null;
+  const video = new CanvasSource(copy ?? renderer.canvas, {
     codec: 'avc',
     quality: new Quality({ bitrate: job.videoBitrate }),
     keyFrameInterval: 1,
@@ -101,6 +106,7 @@ async function encodeWebCodecs(job: EncodeJob, renderer: ReplayRenderer): Promis
     const t = i / job.fps;
     const r0 = performance.now();
     renderer.renderAt(t);
+    copyCtx?.drawImage(renderer.canvas, 0, 0);
     renderMs += performance.now() - r0;
     await video.add(t, 1 / job.fps);
   }

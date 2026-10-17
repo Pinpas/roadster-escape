@@ -11,6 +11,7 @@
       <h1>Share spike</h1>
       <p>Throwaway. Renders 5 s offline, encodes MP4, shares it.</p>
     </header>
+    <p id="escape" hidden></p>
     <main>
       <section class="controls">
         <fieldset>
@@ -29,7 +30,8 @@
           <label><input type="radio" name="path" value="webcodecs" /> WebCodecs</label>
           <label><input type="radio" name="path" value="mediarecorder" /> MediaRecorder</label>
         </fieldset>
-        <label class="inline"><input type="checkbox" name="audio" checked /> Audio track</label>
+        <label class="inline"><input type="checkbox" name="audio" /> Audio track (AAC where supported)</label>
+        <label class="inline"><input type="checkbox" name="copy" checked /> Copy each frame through a 2D canvas</label>
         <div class="buttons">
           <button id="encode">Encode</button>
           <button id="share" disabled>Share</button>

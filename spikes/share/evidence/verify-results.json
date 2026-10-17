@@ -1,0 +1,81 @@
+{
+  "done": true,
+  "results": [
+    {
+      "size": "portrait",
+      "copyFrame": true,
+      "path": "webcodecs",
+      "videoBitrate": 6000000,
+      "mime": "video/mp4",
+      "videoCodec": "avc1.64001f",
+      "audioCodec": null,
+      "encoderConfig": {
+        "codec": "avc1.64001f",
+        "width": 720,
+        "height": 1280,
+        "displayWidth": 720,
+        "displayHeight": 1280,
+        "bitrate": 6000000,
+        "bitrateMode": "variable",
+        "alpha": "discard",
+        "framerate": 30,
+        "latencyMode": "quality",
+        "avc": {
+          "format": "avc"
+        }
+      },
+      "frames": 150,
+      "wallMs": 1228,
+      "renderMs": 95,
+      "bytes": 1428890,
+      "xSafe": true,
+      "shareRoute": "download-and-intent",
+      "selfCheck": {
+        "ok": true,
+        "codec": "avc1.640c1f",
+        "packets": 150,
+        "expectedFrames": 150,
+        "duration": 5,
+        "distinctProbeFrames": "5/5"
+      }
+    },
+    {
+      "size": "landscape",
+      "copyFrame": true,
+      "path": "webcodecs",
+      "videoBitrate": 6000000,
+      "mime": "video/mp4",
+      "videoCodec": "avc1.64001f",
+      "audioCodec": null,
+      "encoderConfig": {
+        "codec": "avc1.64001f",
+        "width": 1280,
+        "height": 720,
+        "displayWidth": 1280,
+        "displayHeight": 720,
+        "bitrate": 6000000,
+        "bitrateMode": "variable",
+        "alpha": "discard",
+        "framerate": 30,
+        "latencyMode": "quality",
+        "avc": {
+          "format": "avc"
+        }
+      },
+      "frames": 150,
+      "wallMs": 1234,
+      "renderMs": 87,
+      "bytes": 1577007,
+      "xSafe": true,
+      "shareRoute": "download-and-intent",
+      "selfCheck": {
+        "ok": true,
+        "codec": "avc1.640c1f",
+        "packets": 150,
+        "expectedFrames": 150,
+        "duration": 5,
+        "distinctProbeFrames": "5/5"
+      }
+    }
+  ]
+}

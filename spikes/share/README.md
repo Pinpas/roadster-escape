@@ -16,7 +16,7 @@ Every encode and every capability probe is uploaded to `out/` on the dev server,
 
 ```bash
 npm run verify       # headless Chromium: encode both sizes, click Share, ffprobe and decode each MP4
-node scripts/bench.mjs   # 5 alternating runs of 30 fps and 60 fps
+node scripts/bench.mjs   # 5 alternating runs: 30 fps with and without the 2D frame copy, and 60 fps
 npm run size         # minified and gzipped size of the muxer options
 ```
 
