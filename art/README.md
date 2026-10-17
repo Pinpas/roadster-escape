@@ -27,6 +27,8 @@ The run writes `public/models/roadster.glb` and `art/previews/roadster.png`, and
 - `lib/export.py` exports the GLB and compresses it with gltf-transform.
 - `lib/preview.py` renders a flat-lit Workbench contact sheet under 400 KB.
 - `lib/cli.py` parses the script arguments and turns any error into a non-zero exit.
+- `lib/kit.py` holds shared parts for the fleet: rounded shells, star-hub wheels, wheel sockets and the size check.
+- `roadster.py` builds the Roadster, and `fleet.py` builds the police car, the traffic and the roadblock.
 
 ## What a look receives
 
@@ -88,3 +90,26 @@ The six materials are `body`, `glass`, `lights`, `wheel`, `nozzle` and `thruster
 
 The contact sheet shows, from top left: a front three-quarter view, a rear three-quarter view with the four lit thruster mouths, the side profile, the plan view, and two renders at 20 by 20 pixels scaled up, from the front three-quarter angle and from the chase camera.
 
+## The fleet
+
+`fleet.py` builds the other road users in one Blender run and writes one GLB and one two-view preview each:
+
+```bash
+~/projects/agentbox/scripts/heavy ~/.local/bin/blender -b --factory-startup --python art/fleet.py
+```
+
+| Asset | GLB | Triangles | Size (W x L x H) |
+| --- | --- | --- | --- |
+| Police car | `public/models/police.glb` | 2,576 | 2.2 x 5.1 x 2.0 m |
+| Hatchback | `public/models/hatch.glb` | 1,672 | 2.0 x 4.1 x 1.5 m |
+| SUV | `public/models/suv.glb` | 1,672 | 2.1 x 5.0 x 1.9 m |
+| Semi truck | `public/models/semi.glb` | 2,184 | 2.6 x 14.8 x 4.1 m |
+| Roadblock | `public/models/roadblock.glb` | 1,492 | 3.4 x 1.3 x 1.3 m |
+
+Every car has a `body` node with materials `body`, `glass`, `lights` and `wheel`, and wheel sockets `wheel_<axle><l|r>` (axles `f` and `r`, plus `m` on the semi) that spin about local X. The police car is black with cream panels, so it never blends with the silver Roadster. Its light bar halves are separate nodes with their own materials, `lightbar_red` and `lightbar_blue`, so a look can flash them. The roadblock fits one 3.7 m lane: a striped beam on two A-frames, a red lamp (material `lights`) and two cones in front of the beam ends. `fleet.py` takes no arguments and always writes into `public/models/` and `art/previews/`. Every export fails unless its materials carry only the role names above.
+
+![Police car](previews/police.png)
+![Hatchback](previews/hatch.png)
+![SUV](previews/suv.png)
+![Semi truck](previews/semi.png)
+![Roadblock](previews/roadblock.png)
