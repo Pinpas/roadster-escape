@@ -62,6 +62,7 @@ These flags make the game cheap to run in a software-rendered test browser.
 | `?fps=N` | Renders at most N frames per second. The simulation still steps at 60 Hz. |
 | `?still` | Renders one frame, then stops the loop. |
 | `?dpr=N` | Renders at pixel ratio N, up to 4, instead of the device pixel ratio, which is capped at 2. |
+| `?debug` | Shows the version, the render rate, and the simulation tick. |
 
 The loop also stops while the page is hidden.
 
@@ -103,6 +104,14 @@ Previews do not inherit production settings. Preview vars and bindings go in the
 To serve the build with the Workers runtime locally, run `npm run preview:cf`. It builds, then runs `npx wrangler dev --ip 0.0.0.0 --port 5106`, which needs no login. Agents on the build box use `.claude/skills/verify-roadster-escape/scripts/dev-server.sh start-cf` instead, which builds through `heavy` and can stop the server cleanly. `npm run deploy` deploys production by hand and is for Hugo only.
 
 CI runs lint, type checks, tests, and a production build on every pull request.
+
+## Releases
+
+Every commit message and every pull request title follows [Conventional Commits](https://www.conventionalcommits.org/): `type(scope): subject`. The scope is one of `engine`, `art`, `share`, `sim`, `render`, `ui`, `ci`, `docs`, or `deps`, and it may be left out. CI runs commitlint on every commit of a pull request and on its title. Pull requests land with rebase merges, so each commit reaches `main` as written. Keep commits small, and fold review fixes into the commit they fix with `git commit --fixup` and `git rebase --autosquash` before merge.
+
+release-please reads the commits on `main` and keeps a release pull request open with the next version and its `CHANGELOG.md` entry. Merging that pull request tags `vX.Y.Z` and publishes a GitHub Release. That merge is a release, so it is Hugo's step. Commitlint stays out of the required checks, because release-please opens its pull request with `GITHUB_TOKEN`, which starts no workflows. A required check would block every release pull request. Before 1.0.0, a `feat` raises the minor version and a `fix` raises the patch version. The plan is one minor version per finished roadmap phase, starting at 0.1.0, and 1.0.0 at launch.
+
+The game shows its version and commit in the bottom-right corner, for example `v0.1.0 · 1a2b3c4`. Add `?debug` to the URL for an overlay with the version, the render rate, and the simulation tick. Quote the version in bug reports.
 
 ## Disclaimer
 
