@@ -1,0 +1,32 @@
+/** Lighting and grade numbers for the graded-lit look. Colours come from `../palette`. */
+export const tune = {
+  sunIntensity: 3.3,
+  hemiSky: '#a99ff0',
+  hemiGround: '#f0b07a',
+  hemiIntensity: 2.9,
+  shadowShift: 0.25,
+  litAmbient: 0.45,
+  bandMid: 0.45,
+  rimStrength: 2.0,
+  emissiveGain: 5,
+  sunCoreGain: 16,
+
+  fogDensity: 0.00046,
+  hazeHeight: 260,
+  cloudFog: 0.4,
+  mesaAmbient: 0.4,
+
+  exposure: 1.0,
+  bloom: 1.1,
+  diffuse: 0.06,
+  bloomThreshold: 1.0,
+  lift: [0.026, 0.015, 0.038],
+  gamma: [1.0, 1.0, 1.03],
+  gain: [1.03, 1.0, 0.95],
+  shadowTone: [0.96, 0.95, 1.06],
+  highTone: [1.06, 1.0, 0.9],
+  saturation: 1.06,
+  contrast: 0.18,
+  vignette: 0.4,
+  vignetteColor: [0.7, 0.6, 0.82],
+} as const;
