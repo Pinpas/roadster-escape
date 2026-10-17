@@ -13,7 +13,9 @@ SRGB = {
     "mesa": "#c8664a",
     "asphalt": "#4a4458",
     "lane_paint": "#fff4d6",
-    "roadster": "#e8322e",
+    "roadster": "#d9d6d0",
+    "roadster_lower": "#1f1d24",
+    "roadster_red": "#e8322e",
     "police_blue": "#2f6bff",
     "police_red": "#ff3048",
     "thruster": "#eaf6ff",
@@ -43,7 +45,7 @@ _LINEAR = {name: _hex_to_linear(value) for name, value in SRGB.items()}
 _LINEAR.update(
     trim=_shade(_LINEAR["asphalt"], 0.45),
     tyre=_shade(_LINEAR["asphalt"], 0.3),
-    rim=_mix(_LINEAR["lane_paint"], _LINEAR["shadow"], 0.45),
+    rim=_shade(_LINEAR["asphalt"], 1.6),
     glass=_shade(_mix(_LINEAR["asphalt"], _LINEAR["shadow"], 0.3), 0.4),
 )
 
