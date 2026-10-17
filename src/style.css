@@ -14,3 +14,31 @@ body {
   height: 100%;
   touch-action: none;
 }
+
+.version-label {
+  position: fixed;
+  right: max(8px, env(safe-area-inset-right));
+  bottom: max(6px, env(safe-area-inset-bottom));
+  font:
+    11px/1 ui-monospace,
+    monospace;
+  color: rgb(255 255 255 / 75%);
+  text-shadow: 0 1px 2px rgb(0 0 0 / 45%);
+  pointer-events: none;
+  user-select: none;
+}
+
+.debug-overlay {
+  position: fixed;
+  top: max(8px, env(safe-area-inset-top));
+  left: max(8px, env(safe-area-inset-left));
+  margin: 0;
+  padding: 6px 8px;
+  font:
+    12px/1.4 ui-monospace,
+    monospace;
+  color: #fff;
+  background: rgb(0 0 0 / 55%);
+  border-radius: 4px;
+  pointer-events: none;
+}
