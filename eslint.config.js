@@ -9,7 +9,13 @@ export default defineConfig(
   tseslint.configs.strictTypeChecked,
   {
     languageOptions: {
-      parserOptions: { projectService: true, tsconfigRootDir: import.meta.dirname },
+      parserOptions: {
+        projectService: {
+          allowDefaultProject: ['vite.config.ts'],
+          defaultProject: 'tsconfig.node.json',
+        },
+        tsconfigRootDir: import.meta.dirname,
+      },
     },
   },
   { files: ['**/*.js'], extends: [tseslint.configs.disableTypeChecked] },
