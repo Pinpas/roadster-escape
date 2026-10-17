@@ -36,7 +36,7 @@ export function skyDome(): Mesh {
     depthTest: false,
     fog: false,
   });
-  const dome = new Mesh(new SphereGeometry(4000, 32, 16), mat);
+  const dome = new Mesh(new SphereGeometry(4000, 24, 12), mat);
   dome.renderOrder = -10;
   dome.frustumCulled = false;
   return dome;
@@ -56,7 +56,7 @@ function cloudGeometry(): BufferGeometry {
   const top = new Color('#fff6ec');
   const base = new Color('#e6dcf0');
   const parts: BufferGeometry[] = [];
-  const azimuths = [-82, -64, -50, -22, -6, 12, 30, 47, 66, 84];
+  const azimuths = [-54, -40, -24, -10, 4, 18, 33, 50];
   for (const azDeg of azimuths) {
     const az = ((azDeg + (r() - 0.5) * 8) * Math.PI) / 180;
     const dist = 2900 + r() * 650;

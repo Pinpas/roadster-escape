@@ -11,7 +11,7 @@ import { tune } from './tune';
  */
 export const lookB: Look = {
   id: 'b',
-  title: 'graded lit',
+  title: 'Graded lit',
   canvasAntialias: false,
   build(renderer, world) {
     assignMaterials(world, materialPicker());
@@ -25,9 +25,8 @@ export const lookB: Look = {
     const sky = clouds();
     world.scene.add(dome, sky);
 
-    const post = createPost(renderer);
-    const still = new URLSearchParams(location.search).has('still');
-    let frames = 0;
+    const params = new URLSearchParams(location.search);
+    const post = createPost(renderer, params.get('tier') === 'low');
 
     return {
       update(t) {
@@ -36,15 +35,8 @@ export const lookB: Look = {
         sky.position.set(cam.x, 0, cam.z);
         sky.rotation.y = t * 0.0015;
       },
-      render() {
-        if (still && frames > 2) return;
-        frames++;
-        post.render(world.scene, world.camera);
-      },
-      resize(w, h, dpr) {
-        frames = 0;
-        post.resize(w, h, dpr);
-      },
+      render: () => post.render(world.scene, world.camera),
+      resize: (w, h, dpr) => post.resize(w, h, dpr),
     };
   },
 };

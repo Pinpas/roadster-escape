@@ -97,11 +97,15 @@ vec3 toSRGB(vec3 c) {
 
 void main() {
   vec3 hdr = textureLod(tScene, vUv, 0.0).rgb;
+#ifdef B_LOW
+  vec3 c = hdr * uExposure;
+#else
   vec3 m0 = bspline(uLods.x);
   vec3 m1 = bspline(uLods.y);
   vec3 m2 = bspline(uLods.z);
   vec3 bloom = 0.5 * bright(m0) + 0.32 * bright(m1) + 0.22 * bright(m2);
   vec3 c = (mix(hdr, m1, uDiffuse) + bloom * uBloom) * uExposure;
+#endif
   c = neutralCurve(c);
   c = c * uGain + uLift * (1.0 - c);
   c = pow(max(c, 0.0), 1.0 / uGamma);
@@ -118,12 +122,13 @@ void main() {
 }
 `;
 
-export function createPost(renderer: WebGLRenderer) {
+/** `low` drops bloom and diffusion: no mip chain, one texture read per pixel, 2x MSAA. */
+export function createPost(renderer: WebGLRenderer, low: boolean) {
   const target = new WebGLRenderTarget(1, 1, {
     type: HalfFloatType,
-    samples: 4,
-    generateMipmaps: true,
-    minFilter: LinearMipmapLinearFilter,
+    samples: low ? 2 : 4,
+    generateMipmaps: !low,
+    minFilter: low ? LinearFilter : LinearMipmapLinearFilter,
     magFilter: LinearFilter,
     depthBuffer: true,
   });
@@ -150,6 +155,7 @@ export function createPost(renderer: WebGLRenderer) {
       varying vec2 vUv;
       void main() { vUv = position.xy * 0.5 + 0.5; gl_Position = vec4(position.xy, 0.0, 1.0); }`,
     fragmentShader,
+    defines: low ? { B_LOW: '' } : {},
     depthTest: false,
     depthWrite: false,
   });
