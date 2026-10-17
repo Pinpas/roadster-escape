@@ -88,7 +88,6 @@ const fragment = /* glsl */ `
 #include <packing>
 #include <lights_pars_begin>
 #include <shadowmap_pars_fragment>
-#include <shadowmask_pars_fragment>
 uniform vec3 uSunColor;
 uniform vec3 uShadowTint;
 uniform vec3 uTermTint;

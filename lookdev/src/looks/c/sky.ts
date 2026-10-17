@@ -42,13 +42,13 @@ export function createSky(uniforms: Record<string, IUniform>): Mesh {
         col = mix(col, uSkyTop, smoothstep(0.26, 0.8, hj));
 
         float s = max(dot(d, uSunDir), 0.0);
-        float halo = pow(s, 3.0) * 0.3 + pow(s, 14.0) * 0.25 + smoothstep(0.95, 0.985, s) * 0.18 + smoothstep(0.985, 0.996, s) * 0.25;
+        float halo = pow(s, 2.5) * 0.34 + pow(s, 10.0) * 0.3 + smoothstep(0.95, 0.985, s) * 0.18 + smoothstep(0.985, 0.996, s) * 0.25;
         col = mix(col, uHalo, clamp(halo, 0.0, 1.0));
 
         vec2 p = d.xz / (max(h, 0.0) + 0.07);
-        p = vec2(p.x * 0.12, p.y * 0.62) + vec2(uTime * 0.012, 0.0);
+        p = vec2(p.x * 0.17, p.y * 0.62) + vec2(uTime * 0.012, 0.0);
         float n = fbm2(p);
-        float deck = 0.17 * exp(-pow((h - 0.055) / 0.03, 2.0))
+        float deck = 0.13 * exp(-pow((h - 0.06) / 0.035, 2.0))
                    + 0.11 * exp(-pow((h - 0.16) / 0.05, 2.0))
                    + 0.14 * exp(-pow((h - 0.36) / 0.11, 2.0));
         float dens = n + deck - 0.6;
