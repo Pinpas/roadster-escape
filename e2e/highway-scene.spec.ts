@@ -9,6 +9,8 @@ interface Sample {
 
 // Sampling the screenshot, not the WebGL buffer, also works after `?still` has stopped the loop.
 const sampleScreen = async (page: Page): Promise<Sample> => {
+  // The title menu covers the Roadster on a phone; these checks are about the scene behind it.
+  await page.addStyleTag({ content: '.screen { visibility: hidden; }' });
   const png = (await page.screenshot()).toString('base64');
   return page.evaluate(async (data) => {
     const image = new Image();

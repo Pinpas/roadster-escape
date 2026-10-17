@@ -42,7 +42,8 @@ export const LANE = 3.7;
 export const ROAD_HALF = 8;
 const DASH_PERIOD = 12;
 const TILE = 300;
-const SPEED = 24;
+/** How far the look-dev scene drives per second; the sim's distance divided by it poses the road. */
+export const HIGHWAY_SPEED = 24;
 const TAU = Math.PI * 2;
 
 export interface Highway {
@@ -52,6 +53,9 @@ export interface Highway {
   readonly focus: Vector3;
   /** The Roadster's position; the chase camera follows it. */
   readonly hero: Vector3;
+  readonly roadster: Group;
+  /** The look-dev police car and traffic, which move on their own in `update`. */
+  readonly attract: readonly Group[];
   /** Pose everything for time `t` in seconds. Pure in `t`, so a frozen frame always looks the same. */
   update(t: number): void;
 }
@@ -404,8 +408,10 @@ export function createHighway(): Highway {
     parts,
     focus,
     hero: roadsterRoot.position,
+    roadster: roadsterRoot,
+    attract: [policeRoot, ...cars.map((car) => car.root)],
     update(t) {
-      const pz = -SPEED * t;
+      const pz = -HIGHWAY_SPEED * t;
       const sway = Math.sin(t * 0.37) * 0.9;
       roadsterRoot.position.set(sway * 0.4, 0, pz);
       roadsterRoot.rotation.z = -Math.cos(t * 0.37) * 0.02;
