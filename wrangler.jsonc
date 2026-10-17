@@ -1,0 +1,10 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "roadster-escape",
+  "compatibility_date": "2026-10-17",
+  "assets": {
+    "directory": "./dist",
+  },
+  // Worker Previews do not inherit production settings; preview vars and bindings go here.
+  "previews": {},
+}

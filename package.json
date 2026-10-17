@@ -11,6 +11,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "preview:cf": "npm run build && wrangler dev --ip 0.0.0.0 --port 5106",
+    "deploy": "npm run build && wrangler deploy",
     "lint": "eslint . && prettier --check .",
     "format": "prettier --write .",
     "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.sim.json",
@@ -28,6 +30,7 @@
     "typescript": "~6.0.3",
     "typescript-eslint": "^8.71.2",
     "vite": "^8.3.4",
-    "vitest": "^5.0.5"
+    "vitest": "^5.0.5",
+    "wrangler": "^4.151.1"
   }
 }
