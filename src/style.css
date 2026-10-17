@@ -42,3 +42,114 @@ body {
   border-radius: 4px;
   pointer-events: none;
 }
+
+.hud {
+  position: fixed;
+  top: max(10px, env(safe-area-inset-top));
+  left: 50%;
+  translate: -50% 0;
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 2px 12px;
+  align-items: center;
+  font:
+    700 16px/1.1 system-ui,
+    sans-serif;
+  color: #fff;
+  text-shadow: 0 2px 3px rgb(0 0 0 / 45%);
+  pointer-events: none;
+}
+
+.hud-score {
+  font-size: 28px;
+}
+
+.hud-combo {
+  color: #ffd25a;
+}
+
+.hud-stars {
+  grid-column: 1 / -1;
+  justify-self: center;
+  letter-spacing: 2px;
+}
+
+.hud-air {
+  grid-column: 1 / -1;
+  width: 160px;
+  height: 8px;
+  border-radius: 4px;
+  background: rgb(0 0 0 / 35%);
+  overflow: hidden;
+}
+
+.hud-air-fill {
+  height: 100%;
+  background: #eaf6ff;
+}
+
+.screen {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 10px;
+  padding: 24px;
+  text-align: center;
+  font:
+    500 16px/1.4 system-ui,
+    sans-serif;
+  color: #fff;
+  text-shadow: 0 2px 4px rgb(0 0 0 / 50%);
+  background: rgb(20 16 40 / 35%);
+}
+
+.screen[hidden],
+.hud[hidden] {
+  display: none;
+}
+
+.screen-title {
+  margin: 0;
+  font-size: clamp(32px, 9vw, 64px);
+  letter-spacing: 1px;
+}
+
+.screen-busted {
+  color: #ff3048;
+}
+
+.screen-line {
+  margin: 0;
+  font-size: 20px;
+  font-style: italic;
+}
+
+.screen-score {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.screen-text {
+  margin: 0;
+  max-width: 32ch;
+}
+
+.screen-button {
+  margin-top: 12px;
+  padding: 12px 28px;
+  font:
+    700 18px system-ui,
+    sans-serif;
+  color: #fff;
+  background: #e8322e;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.screen-button:disabled {
+  opacity: 0.5;
+}
