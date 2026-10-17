@@ -3,6 +3,8 @@ export interface Rng {
   next(): number;
   /** A uniform integer in [min, max). */
   int(min: number, max: number): number;
+  /** The 32-bit state. `createRng(rng.state())` resumes this exact sequence. */
+  state(): number;
 }
 
 /** mulberry32: 32-bit state, fast, and identical on every JS engine. */
@@ -18,5 +20,6 @@ export function createRng(seed: number): Rng {
   return {
     next,
     int: (min, max) => min + Math.floor(next() * (max - min)),
+    state: () => state,
   };
 }

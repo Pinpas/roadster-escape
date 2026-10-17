@@ -22,6 +22,16 @@ describe('createRng', () => {
     ]);
   });
 
+  it('resumes the same sequence from a saved state', () => {
+    const rng = createRng(20261015);
+    rng.next();
+    rng.int(0, 3);
+    const resumed = createRng(rng.state());
+    expect(Array.from({ length: 5 }, () => resumed.next())).toEqual(
+      Array.from({ length: 5 }, () => rng.next()),
+    );
+  });
+
   it('keeps floats in [0, 1)', () => {
     for (const value of draw(7, 10_000)) {
       expect(value).toBeGreaterThanOrEqual(0);
