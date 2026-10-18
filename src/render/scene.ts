@@ -10,7 +10,7 @@ import {
   Vector3,
   WebGLRenderer,
 } from 'three';
-import { isBoosting, type World } from '../sim/runner';
+import { isBoosting, type SimEvent, type World } from '../sim/runner';
 import { createChase } from './chase';
 import { SUN_DIR } from './look/haze';
 import { highMaterials, highToon } from './look/materials-high';
@@ -28,6 +28,19 @@ const POWER = 'high-performance';
 const VERTICAL_FOV = 50;
 // Portrait phones widen the view instead of cropping the lanes at the sides.
 const MIN_HORIZONTAL_FOV = 38;
+/** Camera offset and roll at full shake; shake grows with the square of the trauma. */
+const SHAKE_METERS = 0.45;
+const SHAKE_ROLL = 0.045;
+/** Trauma lost per second, so a full-strength shake settles in well under a second. */
+const TRAUMA_DECAY = 1.8;
+const BOOST_FOV = 5;
+
+/** A cheap, smooth jitter in [-1, 1]; each `seed` gives an independent axis. */
+const jitter = (t: number, seed: number): number =>
+  Math.sin(t * 41 + seed * 12.9) * 0.6 + Math.sin(t * 67.3 + seed * 7.1) * 0.4;
+
+/** Exponential easing toward a target that holds at any frame rate. */
+const ease = (rate: number, dt: number): number => 1 - Math.exp(-rate * dt);
 
 export interface FrameStats {
   /** Draw calls and triangles of the last frame, shadow pass and post pass included. */
@@ -39,6 +52,8 @@ export interface View {
   readonly tier: TierChoice;
   /** Draws the world after the latest fixed step; `simSeconds` drives the sky and camera sway. */
   render(world: World, simSeconds: number): void;
+  /** Feeds the events of each sim step, for camera kicks and shakes. */
+  onEvents(events: readonly SimEvent[]): void;
   stats(): FrameStats;
 }
 
@@ -116,6 +131,20 @@ export function createView(
   const rig = { position: new Vector3(), target: new Vector3() };
   let portrait = 0;
   let boostPull = 0;
+  let baseFov = VERTICAL_FOV;
+  // Camera juice: shake from crashes and smashes, FOV kicks from boosts and ramps.
+  const calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let trauma = 0;
+  let fovKick = 0;
+  let boostFov = 0;
+  let lastSeconds: number | undefined;
+  const addTrauma = (amount: number): void => {
+    trauma = Math.min(1, trauma + (calm ? amount * 0.3 : amount));
+  };
+  const kick = (degrees: number): void => {
+    const scaled = calm ? degrees / 2 : degrees;
+    fovKick = scaled > 0 ? Math.max(fovKick, scaled) : Math.min(fovKick, scaled);
+  };
   const post = high ? createPost(renderer, Math.min(4, caps.halfFloatSamples)) : undefined;
 
   // Checking every frame catches window resizes, rotation, and pixel-ratio changes alike.
@@ -135,10 +164,8 @@ export function createView(
     post?.resize(width, height, pixelRatio);
     camera.aspect = width / height;
     const halfWidth = Math.tan(MathUtils.degToRad(MIN_HORIZONTAL_FOV / 2));
-    camera.fov = Math.max(
-      VERTICAL_FOV,
-      MathUtils.radToDeg(2 * Math.atan(halfWidth / camera.aspect)),
-    );
+    baseFov = Math.max(VERTICAL_FOV, MathUtils.radToDeg(2 * Math.atan(halfWidth / camera.aspect)));
+    camera.fov = baseFov + fovKick + boostFov;
     camera.updateProjectionMatrix();
     portrait = 1 - MathUtils.smoothstep(camera.aspect, 0.5, 1.3);
   };
@@ -155,11 +182,28 @@ export function createView(
       chaseRoot.position.z = -world.distance;
       chase.update(world);
       chaseCamera(highway.hero, simSeconds, portrait, rig);
-      // The camera trails further back during a boost, so the speed reads.
-      boostPull += ((isBoosting(world) ? 3 : 0) - boostPull) * 0.08;
+      const dt = lastSeconds === undefined ? 0 : MathUtils.clamp(simSeconds - lastSeconds, 0, 0.1);
+      lastSeconds = simSeconds;
+      const boosting = isBoosting(world);
+      // The camera trails further back and widens during a boost, so the speed reads.
+      boostPull += ((boosting ? 3 : 0) - boostPull) * ease(5, dt);
+      boostFov += ((boosting ? BOOST_FOV : 0) - boostFov) * ease(3, dt);
+      fovKick *= Math.exp(-4 * dt);
+      trauma = Math.max(0, trauma - TRAUMA_DECAY * dt);
       rig.position.z += boostPull;
       camera.position.copy(rig.position);
+      const shake = trauma * trauma + (boosting && !calm ? 0.05 : 0);
+      if (shake > 0) {
+        camera.position.x += shake * SHAKE_METERS * jitter(simSeconds, 0);
+        camera.position.y += shake * SHAKE_METERS * 0.6 * jitter(simSeconds, 1);
+      }
       camera.lookAt(rig.target);
+      if (shake > 0) camera.rotateZ(shake * SHAKE_ROLL * jitter(simSeconds, 2));
+      const fov = baseFov + fovKick + boostFov;
+      if (Math.abs(fov - camera.fov) > 0.01) {
+        camera.fov = fov;
+        camera.updateProjectionMatrix();
+      }
       sun.target.position.copy(highway.focus);
       sun.position.copy(highway.focus).addScaledVector(SUN_DIR, 120);
       sky.follow(camera.position.x, camera.position.y, camera.position.z, simSeconds);
@@ -167,6 +211,34 @@ export function createView(
       renderer.info.reset();
       if (post) post.render(scene, camera);
       else renderer.render(scene, camera);
+    },
+    onEvents(events) {
+      for (const event of events) {
+        switch (event.kind) {
+          case 'crash':
+            addTrauma(0.75);
+            kick(-4);
+            break;
+          case 'busted':
+            addTrauma(1);
+            break;
+          case 'smash':
+            addTrauma(event.thing === 'semi' ? 0.5 : event.thing === 'cone' ? 0.15 : 0.3);
+            break;
+          case 'boost':
+            addTrauma(0.25);
+            kick(9);
+            break;
+          case 'ramp':
+            kick(6);
+            break;
+          case 'land':
+            addTrauma(0.2);
+            break;
+          default:
+            break;
+        }
+      }
     },
     stats: () => ({ calls: renderer.info.render.calls, triangles: renderer.info.render.triangles }),
   };
