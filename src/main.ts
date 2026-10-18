@@ -1,4 +1,5 @@
 import './style.css';
+import { createAudio } from './audio/audio';
 import { createInput } from './input/input';
 import { exposeDebug } from './render/debug';
 import { parseRenderFlags } from './render/flags';
@@ -8,8 +9,8 @@ import { createView } from './render/scene';
 import { STEP_SECONDS } from './sim/fixed-step';
 import { createWorld, scoreOf, stepWorld, type World } from './sim/runner';
 import { loadBest, saveBest } from './ui/best-score';
-import { randomBustLine } from './ui/bust-lines';
 import { mountDebugOverlay } from './ui/debug-overlay';
+import { createPopups } from './ui/popups';
 import { createUi } from './ui/screens';
 import { mountVersionLabel } from './ui/version';
 
@@ -34,9 +35,15 @@ const storage = {
 
 const view = createView(canvas, flags.pixelRatio, parseTier(location.search));
 const input = createInput(canvas);
-const ui = createUi(document.body, () => {
-  input.push('boost');
+const audio = createAudio(storage);
+const ui = createUi(document.body, {
+  onBoost: () => {
+    input.push('boost');
+  },
+  onToggleMute: () => audio.toggleMute(),
+  muted: audio.muted,
 });
+const popups = createPopups(document.body);
 mountVersionLabel(document.body);
 const debugOverlay = params.has('debug') ? mountDebugOverlay(document.body) : undefined;
 
@@ -51,6 +58,8 @@ const startRun = (): void => {
   phase = 'playing';
   world = createWorld(nextSeed());
   input.drain();
+  audio.unlock();
+  audio.setPhase('playing');
   ui.playing();
 };
 
@@ -58,10 +67,16 @@ const step = (): void => {
   if (phase === 'busted') return;
   const actions = input.drain();
   stepWorld(world, phase === 'playing' ? actions : []);
+  if (phase === 'playing' && world.events.length > 0) {
+    audio.play(world.events, world);
+    popups.show(world.events, world);
+    view.onEvents(world.events);
+  }
   if (phase === 'playing' && world.busted) {
     phase = 'busted';
+    audio.setPhase('busted');
     const score = scoreOf(world);
-    ui.busted({ score, best: saveBest(storage, score), line: randomBustLine() }, startRun);
+    ui.busted({ score, best: saveBest(storage, score), world }, startRun);
   }
 };
 
@@ -79,7 +94,10 @@ const loop = createLoop({
   step,
   render: ({ nowMs, tick, alpha }) => {
     view.render(world, (tick + alpha) * STEP_SECONDS);
-    if (phase === 'playing') ui.updateHud(world);
+    if (phase === 'playing') {
+      ui.updateHud(world);
+      audio.update(world);
+    }
     debugOverlay?.rendered(nowMs, world.step);
   },
 });
