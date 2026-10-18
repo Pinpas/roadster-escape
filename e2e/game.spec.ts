@@ -33,12 +33,47 @@ test('a run goes from title to chase to BUSTED to retry, and the best score surv
     else await page.keyboard.press(key);
   };
 
-  await page.goto('/?fps=10&dpr=1&seed=1');
+  await page.goto('/?fps=10&dpr=1&seed=1&debug');
   await firstFrame(page, 1);
   await press('Tap to start', 'Space');
   await expect(page.locator('.hud-score')).toBeVisible();
-  if (!touch) await page.keyboard.press('ArrowLeft');
 
+  interface DebugWorld {
+    y: number;
+    lane: number;
+    boostLeft: number;
+    boostMeter: number;
+  }
+  const world = () =>
+    page.evaluate(() =>
+      (window as unknown as { __roadster: { world(): DebugWorld } }).__roadster.world(),
+    );
+  if (touch) await page.locator('#game').tap();
+  else await page.keyboard.press('Space');
+  await expect
+    .poll(async () => (await world()).y, { message: 'the Roadster jumps' })
+    .toBeGreaterThan(1);
+  if (!touch) {
+    await page.keyboard.press('ArrowLeft');
+    await expect.poll(async () => (await world()).lane, { message: 'it changes lane' }).toBe(0);
+  }
+  await page.evaluate(() => {
+    (window as unknown as { __roadster: { world(): DebugWorld } }).__roadster.world().boostMeter =
+      1;
+  });
+  if (touch) await page.getByRole('button', { name: 'BOOST' }).tap({ force: true });
+  else await page.keyboard.press('Shift');
+  await expect
+    .poll(async () => (await world()).boostLeft, { message: 'it boosts' })
+    .toBeGreaterThan(0);
+
+  // Two crashes bust a run; the cops catch up at once here so the test stays short.
+  await page.waitForTimeout(3000);
+  await page.evaluate(() => {
+    (
+      window as unknown as { __roadster: { world(): { busted: boolean } } }
+    ).__roadster.world().busted = true;
+  });
   const busted = page.getByRole('heading', { name: 'BUSTED' });
   await expect(busted).toBeVisible({ timeout: 30_000 });
   await page.screenshot({

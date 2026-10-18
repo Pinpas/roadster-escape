@@ -1,6 +1,4 @@
-import { TUNING } from '../sim/tuning';
-import { starsFor } from '../sim/wanted';
-import { scoreOf, type World } from '../sim/world';
+import { isBoosting, scoreOf, type World } from '../sim/runner';
 
 export interface BustResult {
   readonly score: number;
@@ -30,18 +28,24 @@ const element = <K extends keyof HTMLElementTagNameMap>(
   return node;
 };
 
-export function createUi(root: HTMLElement): Ui {
+/** `onBoost` fires from the on-screen BOOST button, for phones. */
+export function createUi(root: HTMLElement, onBoost: () => void): Ui {
   const hud = element('div', 'hud');
   const score = element('div', 'hud-score', '0');
-  const combo = element('div', 'hud-combo');
-  const stars = element('div', 'hud-stars');
+  const cops = element('div', 'hud-cops');
   const airBar = element('div', 'hud-air');
   const airFill = element('div', 'hud-air-fill');
   airBar.append(airFill);
-  hud.append(score, combo, stars, airBar);
+  hud.append(score, cops, airBar);
+  const boost = element('button', 'boost-button', 'BOOST');
+  boost.addEventListener('pointerdown', (event) => {
+    event.preventDefault();
+    onBoost();
+  });
 
   const screen = element('div', 'screen');
-  root.append(hud, screen);
+  boost.hidden = true;
+  root.append(hud, boost, screen);
 
   let onConfirm: (() => void) | undefined;
   const confirm = (): void => {
@@ -61,6 +65,7 @@ export function createUi(root: HTMLElement): Ui {
     screen.replaceChildren(...children);
     screen.hidden = false;
     hud.hidden = true;
+    boost.hidden = true;
   };
 
   return {
@@ -69,12 +74,18 @@ export function createUi(root: HTMLElement): Ui {
       show(
         element('h1', 'screen-title', 'Roadster Escape'),
         element('p', 'screen-text', best > 0 ? `Best ${String(best)}` : 'The cops are waiting.'),
-        element('p', 'screen-text', 'Swipe or use the arrow keys to change lanes.'),
+        element('p', 'screen-text', 'Swipe left/right (or ← →) to dodge traffic.'),
         element(
           'p',
           'screen-text',
-          'Swipe up or press Space to hop. Swipe diagonally or press Q / E to barrel-roll.',
+          'Tap, swipe up or Space to jump over cars. Trucks are too tall.',
         ),
+        element(
+          'p',
+          'screen-text',
+          'Full meter? Hit BOOST (swipe down or Shift) to smash through everything.',
+        ),
+        element('p', 'screen-text', 'Crash twice and the cops have you.'),
         start,
       );
       screen.onclick = confirm;
@@ -84,6 +95,7 @@ export function createUi(root: HTMLElement): Ui {
       onConfirm = undefined;
       screen.hidden = true;
       hud.hidden = false;
+      boost.hidden = false;
     },
     busted(result, onRetry) {
       const retry = element('button', 'screen-button', 'Retry');
@@ -104,10 +116,13 @@ export function createUi(root: HTMLElement): Ui {
     },
     updateHud(world) {
       score.textContent = String(scoreOf(world));
-      combo.textContent = world.combo > 1 ? `x${String(world.combo)}` : '';
-      const level = starsFor(world.heat);
-      stars.textContent = '★'.repeat(level) + '☆'.repeat(5 - level);
-      airFill.style.width = `${String(Math.round((world.roadster.air / TUNING.tankLiters) * 100))}%`;
+      cops.textContent = `🚓 ${String(Math.ceil(world.copGap))} m`;
+      cops.classList.toggle('hud-cops-close', world.copGap < 10);
+      const boosting = isBoosting(world);
+      airFill.style.width = `${String(boosting ? 100 : Math.round(world.boostMeter * 100))}%`;
+      const ready = world.boostMeter >= 1 && !boosting;
+      boost.classList.toggle('boost-ready', ready);
+      boost.classList.toggle('boost-on', boosting);
     },
   };
 }
