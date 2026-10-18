@@ -1,4 +1,4 @@
-import type { World } from '../sim/world';
+import type { World } from '../sim/runner';
 import type { View } from './scene';
 
 /**
@@ -24,5 +24,7 @@ export function exposeDebug(
     }
     return { msPerFrame: (performance.now() - start) / frames, ...view.stats(), tier: view.tier };
   };
-  Object.assign(window, { __roadster: { tier: view.tier, stats: () => view.stats(), bench } });
+  Object.assign(window, {
+    __roadster: { tier: view.tier, stats: () => view.stats(), bench, world: currentWorld },
+  });
 }

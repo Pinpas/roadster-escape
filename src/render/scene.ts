@@ -10,7 +10,7 @@ import {
   Vector3,
   WebGLRenderer,
 } from 'three';
-import type { World } from '../sim/world';
+import { isBoosting, type World } from '../sim/runner';
 import { createChase } from './chase';
 import { SUN_DIR } from './look/haze';
 import { highMaterials, highToon } from './look/materials-high';
@@ -98,7 +98,7 @@ export function createView(
   for (const car of highway.attract) car.visible = false;
   const chaseRoot = new Group();
   scene.add(chaseRoot);
-  const chase = createChase(chaseRoot);
+  const chase = createChase(chaseRoot, highway.roadster);
 
   const sky = createSky(
     high
@@ -115,6 +115,7 @@ export function createView(
   const camera = new PerspectiveCamera(VERTICAL_FOV, 1, 0.5, 5000);
   const rig = { position: new Vector3(), target: new Vector3() };
   let portrait = 0;
+  let boostPull = 0;
   const post = high ? createPost(renderer, Math.min(4, caps.halfFloatSamples)) : undefined;
 
   // Checking every frame catches window resizes, rotation, and pixel-ratio changes alike.
@@ -147,13 +148,16 @@ export function createView(
     render(world, simSeconds) {
       fitToCanvas();
       highway.update(world.distance / HIGHWAY_SPEED);
-      const pose = roadsterPose(world.roadster);
+      const pose = roadsterPose(world);
       highway.hero.set(pose.x, pose.y, -world.distance);
-      highway.roadster.rotation.set(0, 0, pose.roll);
+      highway.roadster.rotation.set(pose.pitch, 0, pose.roll);
       highway.focus.set(pose.x * 0.5, 0, -world.distance - 14);
       chaseRoot.position.z = -world.distance;
       chase.update(world);
       chaseCamera(highway.hero, simSeconds, portrait, rig);
+      // The camera trails further back during a boost, so the speed reads.
+      boostPull += ((isBoosting(world) ? 3 : 0) - boostPull) * 0.08;
+      rig.position.z += boostPull;
       camera.position.copy(rig.position);
       camera.lookAt(rig.target);
       sun.target.position.copy(highway.focus);

@@ -6,7 +6,7 @@ import { createLoop } from './render/loop';
 import { parseTier } from './render/quality';
 import { createView } from './render/scene';
 import { STEP_SECONDS } from './sim/fixed-step';
-import { createWorld, scoreOf, stepWorld, type World } from './sim/world';
+import { createWorld, scoreOf, stepWorld, type World } from './sim/runner';
 import { loadBest, saveBest } from './ui/best-score';
 import { randomBustLine } from './ui/bust-lines';
 import { mountDebugOverlay } from './ui/debug-overlay';
@@ -34,18 +34,16 @@ const storage = {
 
 const view = createView(canvas, flags.pixelRatio, parseTier(location.search));
 const input = createInput(canvas);
-const ui = createUi(document.body);
+const ui = createUi(document.body, () => {
+  input.push('boost');
+});
 mountVersionLabel(document.body);
 const debugOverlay = params.has('debug') ? mountDebugOverlay(document.body) : undefined;
 
 type Phase = 'title' | 'playing' | 'busted';
 let phase: Phase = 'title';
 /** On the title the Roadster drives an empty road, so the scene moves behind the menu. */
-let world: World = {
-  ...createWorld(nextSeed()),
-  spawnIn: Number.MAX_SAFE_INTEGER,
-  trafficIn: Number.MAX_SAFE_INTEGER,
-};
+let world: World = { ...createWorld(nextSeed()), nextRowAt: Infinity };
 
 if (params.has('debug')) exposeDebug(view, canvas, () => world);
 
@@ -60,7 +58,7 @@ const step = (): void => {
   if (phase === 'busted') return;
   const actions = input.drain();
   stepWorld(world, phase === 'playing' ? actions : []);
-  if (phase === 'playing' && world.roadster.state.kind === 'busted') {
+  if (phase === 'playing' && world.busted) {
     phase = 'busted';
     const score = scoreOf(world);
     ui.busted({ score, best: saveBest(storage, score), line: randomBustLine() }, startRun);
